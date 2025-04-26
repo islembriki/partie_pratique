@@ -6,7 +6,6 @@ public class networksimulator {
     private static DatagramSocket clientSocket;
     private static DatagramSocket serverSocket;
     private static double errorRate = 0.2; // 50% chance of error
-
     public static void main(String[] args) throws Exception {
         clientSocket = new DatagramSocket(5678); // Listen for client
         serverSocket = new DatagramSocket();

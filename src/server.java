@@ -1,32 +1,24 @@
-// For the server.java file
-
 import java.io.*;
 import java.net.*;
 import java.util.Stack;
-
 public class server {
     public static int port = 1234;
     private static DatagramSocket socket; 
-    
     public static void main(String[] args) throws Exception {
         socket = new DatagramSocket(port);
         System.out.println("Server is running on port " + port);
-        
         while (true) {
             byte[] buffer = new byte[1024];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             socket.receive(packet);
-
             String messageWithChecksum = new String(packet.getData(), 0, packet.getLength());
             System.out.println("Received: " + messageWithChecksum);
-            
             // Split message and checksum
             String[] parts = messageWithChecksum.split("\\|");
             if (parts.length != 2) {
                 sendToClient("Erreur: Format invalide", packet.getAddress(), packet.getPort());
                 continue;
             }
-            
             String message = parts[0];
             int receivedChecksum;
             try {
@@ -35,10 +27,8 @@ public class server {
                 sendToClient("Erreur: Checksum invalide", packet.getAddress(), packet.getPort());
                 continue;
             }
-            
             // Calculate checksum on received message
             int calculatedChecksum = calculateChecksum(message);
-            
             // Compare checksums
             if (calculatedChecksum != receivedChecksum) {
                 System.out.println("Checksum error: expected " + receivedChecksum + 
@@ -56,7 +46,7 @@ public class server {
             }
         }
     }
-    
+
     private static int calculateChecksum(String message) {
         // Same method as in client
         int sum = 0;
@@ -65,7 +55,6 @@ public class server {
         }
         return sum;
     }
-    
     private static void sendToClient(String message, InetAddress address, int port) throws IOException {
         byte[] buf = message.getBytes();
         DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
@@ -93,7 +82,7 @@ public class server {
             }
         }
     }
-    
+    //shuning yard
     public static double calculate(String expression) {
         expression = expression.replace("÷", "/").replace("x", "*").replaceAll(" ", "");
         Stack<Double> numbers = new Stack<>();
@@ -162,9 +151,7 @@ public class server {
         // Convert numbers to their binary string representations with decimal points
         String binaryA = doubleToBinaryString(a);
         String binaryB = doubleToBinaryString(b);
-        
         String resultBinary;
-        
         switch (op) {
             case '+': 
                 resultBinary = binaryAdd(binaryA, binaryB);
@@ -184,26 +171,21 @@ public class server {
         }
         
         return binaryStringToDouble(resultBinary);
-    }
-    
+    } 
     // Convert a double to a binary string with decimal point//khtr adition ta azouza tlwj taaml kisma fi wist bi . w ken dima bi norme iee moch mnjm yalkaha 
     /*The error you were seeing "Index 1 out of bounds for length 1" was
      because your friend's code expected strings with decimal points,
       but your code was passing IEEE 754 binary representations without decimal points. */
     private static String doubleToBinaryString(double num) {
         if (num == 0) return "0.0";
-        
         StringBuilder result = new StringBuilder();
         boolean isNegative = num < 0;
         num = Math.abs(num);
-        
         // Convert the integer part
         long intPart = (long) num;
         double fracPart = num - intPart;
-        
         // Convert integer part to binary
         String intBinary = (intPart == 0) ? "0" : Long.toBinaryString(intPart);
-        
         // Convert fractional part to binary (limited precision)
         StringBuilder fracBinary = new StringBuilder();
         for (int i = 0; i < 10 && fracPart > 0; i++) {
@@ -215,31 +197,24 @@ public class server {
                 fracBinary.append("0");
             }
         }
-        
         // Combine the results
         result.append(intBinary);
         result.append(".");
         result.append(fracBinary.length() > 0 ? fracBinary.toString() : "0");
-        
         return (isNegative ? "-" : "") + result.toString();
     }
-    
     // Convert a binary string with decimal point to a double
     private static double binaryStringToDouble(String binary) {
         boolean isNegative = binary.startsWith("-");
         if (isNegative) binary = binary.substring(1);
-        
         String[] parts = binary.split("\\.");
         String intPart = parts[0];
         String fracPart = (parts.length > 1) ? parts[1] : "0";
-        
         double result = 0;
-        
         // Convert integer part
         if (!intPart.equals("0")) {
             result += Long.parseLong(intPart, 2);
         }
-        
         // Convert fractional part
         if (!fracPart.equals("0")) {
             double fraction = 0;
@@ -250,7 +225,6 @@ public class server {
             }
             result += fraction;
         }
-        
         return isNegative ? -result : result;
     }
     
