@@ -1,0 +1,480 @@
+/*import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.Stack;
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+public class client {
+    private static DatagramSocket socket;
+    private static InetAddress serverAddress;
+    //private static int server_port = 1234;
+    private static int server_port = 5678; // Port for network simulator
+    private static String server_ip = "localhost";
+    public static void main(String[] args) {
+        final int NBOUTONS = 20;
+        JButton[] boutons;
+        JTextField txt;
+        JPanel pan;
+        JFrame frame = new JFrame("Calculatrice");
+        frame.setSize(300, 400);
+        Container contenu = frame.getContentPane();
+        contenu.setLayout(new BorderLayout(10, 20));
+        pan = new JPanel();
+        txt = new JTextField();
+        txt.setFont(new Font("Thaoma", Font.PLAIN, 20));
+        txt.setHorizontalAlignment(JTextField.RIGHT);
+        txt.setPreferredSize(new Dimension(0, 40));
+        JPanel txtWrapper = new JPanel(new BorderLayout());
+        txtWrapper.setBorder(new EmptyBorder(10, 10, 0, 10)); 
+        txtWrapper.add(txt, BorderLayout.CENTER);
+        contenu.add(txtWrapper, BorderLayout.NORTH);
+        pan.setLayout(new GridLayout(5, 4, 5, 5));
+        boutons = new JButton[NBOUTONS];
+        String[] b = {"C","±","%","÷","7","8","9","x","4","5","6","-","1","2","3","+","0",".","⌫","="};
+        for (int i = 0; i < NBOUTONS; i++) {
+            boutons[i] = new JButton(b[i]);
+            pan.add(boutons[i]);
+        }
+        JPanel panWrapper = new JPanel(new BorderLayout());
+        panWrapper.setBorder(new EmptyBorder(0, 10, 10, 10));
+        panWrapper.add(pan, BorderLayout.CENTER);
+        contenu.add(panWrapper, BorderLayout.CENTER);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        
+        try {
+            socket = new DatagramSocket();
+            serverAddress = InetAddress.getByName(server_ip);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(frame, "Socket init failed: " + e.getMessage());
+        }
+        
+        ActionListener listener1 = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JButton source = (JButton) e.getSource();
+                String text = source.getText();
+                
+                if ("+x÷%-".contains(text)) {
+                    if (txt.getText().length() > 0) {
+                        txt.setText(txt.getText() + text);
+                    }
+                } else if ("C".equals(text)) {
+                    txt.setText("");
+                    txt.setForeground(Color.BLACK); // Reset to normal color
+                } else if ("=".equals(text)) {
+                    String expression = txt.getText();
+                    // Disable the text field while processing
+                    txt.setEnabled(false);
+                    // Use SwingWorker to perform network operations in background
+                    SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+                        @Override
+                        protected String doInBackground() throws Exception {
+                            try {
+                                sendToServer(expression, serverAddress, server_port);
+                                return receiveFromServer();
+                            } catch (Exception ex) {
+                                return "Erreur: " + ex.getMessage();
+                            }
+                        }
+                        @Override
+                        protected void done() {
+                            try {
+                                String result = get();
+                                if (result.startsWith("Erreur:")) {
+                                    txt.setText(result);
+                                    txt.setForeground(Color.RED);
+                                } else {
+                                    txt.setText(result);
+                                    txt.setForeground(Color.BLACK);
+                                }
+                            } catch (Exception e) {
+                                txt.setText("Erreur: " + e.getMessage());
+                                txt.setForeground(Color.RED);
+                            } finally {
+                                txt.setEnabled(true);
+                            }
+                        }
+                    };
+                    worker.execute();
+                } else if (".".equals(text)) {
+                    if (txt.getText().length() > 0 && !txt.getText().endsWith(".")) {
+                        // Check if the current number already has a decimal point
+                        String currentText = txt.getText();
+                        int lastOperatorIndex = Math.max(
+                            Math.max(currentText.lastIndexOf('+'), currentText.lastIndexOf('-')),
+                            Math.max(currentText.lastIndexOf('x'), currentText.lastIndexOf('÷'))
+                        );
+                        
+                        String currentNumber = currentText.substring(lastOperatorIndex + 1);
+                        if (!currentNumber.contains(".")) {
+                            txt.setText(currentText + text);
+                        }
+                    }
+                } else if ("±".equals(text)) {
+                    String currentText = txt.getText();
+                    if (currentText.length() > 0) {
+                        if (currentText.startsWith("-")) {
+                            txt.setText(currentText.substring(1));
+                        } else {
+                            txt.setText("-" + currentText);
+                        }
+                    }
+                } else if ("⌫".equals(text)) {
+                    String currentText = txt.getText();
+                    if (currentText.length() > 0) {
+                        txt.setText(currentText.substring(0, currentText.length() - 1));
+                    }
+                } else {
+                    txt.setText(txt.getText() + text);
+                }
+            }
+        };
+        
+        for (int i = 0; i < NBOUTONS; i++) {
+            boutons[i].addActionListener(listener1);
+        }
+    }
+    /* 
+    private static void sendToServer(String message, InetAddress address, int port) throws IOException {
+        byte[] buf = message.getBytes();
+        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
+        
+        // Try sending multiple times to increase reliability
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                socket.send(packet);
+                System.out.println("Sent to server: " + message);
+                // Successfully sent, no need for further attempts
+                break;
+            } catch (IOException e) {
+                System.out.println("Send attempt " + (attempt + 1) + " failed: " + e.getMessage());
+                if (attempt == 2) {
+                    // Rethrow on last attempt
+                    throw e;
+                }
+                // Wait a bit before retrying
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    } */
+   //bech nzid hnee methode ili taaal checksum w taaabth liserveur (ili fi comment edika lakdima)
+/* 
+   private static void sendToServer(String message, InetAddress address, int port) throws IOException {
+    // Calculate checksum for message
+    int checksum = calculateChecksum(message);
+    
+    // Combine message and checksum
+    String messageWithChecksum = message + "|" + checksum;
+    
+    byte[] buf = messageWithChecksum.getBytes();
+    DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
+    socket.send(packet);
+}
+
+private static int calculateChecksum(String message) {
+    // Simple checksum: sum of character values
+    int sum = 0;
+    for (char c : message.toCharArray()) {
+        sum += c;
+    }
+    return sum;
+}
+
+    private static String receiveFromServer() throws IOException {
+        // Set timeout to 2 seconds (more reasonable than 1 second)
+        socket.setSoTimeout(10000);
+        
+        byte[] buffer = new byte[1024];
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        
+        try {
+            socket.receive(packet);
+            String result = new String(packet.getData(), 0, packet.getLength());
+            System.out.println("Received from server: " + result);
+            return result;
+        } catch (SocketTimeoutException e) {
+            System.out.println("Socket timeout occurred");
+            
+            // Try one more time before giving up
+            try {
+                System.out.println("Attempting second receive...");
+                socket.receive(packet);
+                String result = new String(packet.getData(), 0, packet.getLength());
+                System.out.println("Received on second attempt: " + result);
+                return result;
+            } catch (Exception ex) {
+                System.out.println("Second receive attempt failed: " + ex.getMessage());
+                // Return appropriate error message
+                return "Erreur: Serveur ne répond pas";
+            }
+        } finally {
+            // Reset timeout for future operations
+            socket.setSoTimeout(0);
+        }
+    }
+}
+    */
+    import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.Stack;
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+public class client {
+    private static DatagramSocket socket;
+    private static InetAddress serverAddress;
+    //private static int server_port = 1234;
+    private static int server_port = 5678; // Port for network simulator
+    private static String server_ip = "localhost";
+
+    public static void main(String[] args) {
+        final int NBOUTONS = 20;
+        JButton[] boutons;
+        JTextField txt;
+        JPanel pan;
+        JFrame frame = new JFrame("Calculatrice");
+        frame.setSize(300, 400);
+        Container contenu = frame.getContentPane();
+        contenu.setLayout(new BorderLayout(10, 20));
+
+        contenu.setBackground(new Color(42, 75, 124)); 
+
+
+
+        pan = new JPanel();
+        pan.setBackground(new Color(42, 75, 124)); 
+
+        txt = new JTextField();
+        txt.setFont(new Font("Thaoma", Font.PLAIN, 20));
+        txt.setHorizontalAlignment(JTextField.RIGHT);
+        txt.setPreferredSize(new Dimension(0, 40));
+        JPanel txtWrapper = new JPanel(new BorderLayout());
+        txtWrapper.setBorder(new EmptyBorder(10, 10, 0, 10)); 
+        txtWrapper.add(txt, BorderLayout.CENTER);
+        txtWrapper.setBackground(new Color(42, 75, 124)); 
+        contenu.add(txtWrapper, BorderLayout.NORTH);
+        pan.setLayout(new GridLayout(5, 4, 5, 5));
+        boutons = new JButton[NBOUTONS];
+        String[] b = {"C","±","%","÷","7","8","9","x","4","5","6","-","1","2","3","+","0",".","⌫","="};
+        for (int i = 0; i < NBOUTONS; i++) {
+            boutons[i] = new JButton(b[i]);
+            boutons[i].setFont(new Font("Arial", Font.BOLD, 16));
+            boutons[i].setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+            boutons[i].setFocusPainted(true);
+            
+          
+            if (i >= 4 && i <= 6 || i >= 8 && i <= 10 || i >= 12 && i <= 14 || i == 16) {
+                boutons[i].setBackground(new Color(255, 180, 76)); 
+                boutons[i].setForeground(Color.BLACK);
+            } else {
+                
+                boutons[i].setBackground(Color.LIGHT_GRAY);
+                boutons[i].setForeground(Color.BLACK);
+            }
+            
+            if (i == 19) { 
+                boutons[i].setBackground(new Color(169, 169, 169)); 
+            }
+
+            pan.add(boutons[i]);
+        }
+        JPanel panWrapper = new JPanel(new BorderLayout());
+        panWrapper.setBorder(new EmptyBorder(0, 10, 10, 10));
+        panWrapper.add(pan, BorderLayout.CENTER);
+        panWrapper.setBackground(new Color(42, 75, 124));
+        contenu.add(panWrapper, BorderLayout.CENTER);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        
+        try {
+            socket = new DatagramSocket();
+            serverAddress = InetAddress.getByName(server_ip);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(frame, "Socket init failed: " + e.getMessage());
+        }
+        
+        ActionListener listener1 = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JButton source = (JButton) e.getSource();
+                String text = source.getText();
+                
+                if ("+x÷%-".contains(text)) {
+                    if (txt.getText().length() > 0) {
+                        txt.setText(txt.getText() + text);
+                    }
+                } else if ("C".equals(text)) {
+                    txt.setText("");
+                    txt.setForeground(Color.BLACK); 
+                } else if ("=".equals(text)) {
+                    
+                    String expression = txt.getText();
+                    
+                    // Disable the text field while processing
+                    txt.setEnabled(false);
+                    
+                    // Use SwingWorker to perform network operations in background
+                    SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+                        @Override
+                        protected String doInBackground() throws Exception {
+                            try {
+                                sendToServer(expression, serverAddress, server_port);
+                                return receiveFromServer();
+                            } catch (Exception ex) {
+                                return "Erreur: " + ex.getMessage();
+                                
+                            }
+                        }
+                        
+                        @Override
+                        protected void done() {
+                            try {
+                                String result = get();
+                                if (result.startsWith("Erreur:")) {
+                                    txt.setText(result);
+                                    txt.setForeground(Color.RED);
+                                } else {
+                                    txt.setText(result);
+                                    txt.setForeground(Color.BLACK);
+                                }
+                            } catch (Exception e) {
+                                txt.setText("Erreur: " + e.getMessage());
+                                txt.setForeground(Color.RED);
+                            } finally {
+                                txt.setEnabled(true);
+                            }
+                        }
+                    };
+                    worker.execute();
+                } else if (".".equals(text)) {
+                    if (txt.getText().length() > 0 && !txt.getText().endsWith(".")) {
+                        // Check if the current number already has a decimal point
+                        String currentText = txt.getText();
+                        int lastOperatorIndex = Math.max(
+                            Math.max(currentText.lastIndexOf('+'), currentText.lastIndexOf('-')),
+                            Math.max(currentText.lastIndexOf('x'), currentText.lastIndexOf('÷'))
+                        );
+                        
+                        String currentNumber = currentText.substring(lastOperatorIndex + 1);
+                        if (!currentNumber.contains(".")) {
+                            txt.setText(currentText + text);
+                        }
+                    }
+                } else if ("±".equals(text)) {
+                    String currentText = txt.getText();
+                    if (currentText.length() > 0) {
+                        if (currentText.startsWith("-")) {
+                            txt.setText(currentText.substring(1));
+                        } else {
+                            txt.setText("-" + currentText);
+                        }
+                    }
+                } else if ("⌫".equals(text)) {
+                    String currentText = txt.getText();
+                    if (currentText.length() > 0) {
+                        txt.setText(currentText.substring(0, currentText.length() - 1));
+                    }
+                } else {
+                    txt.setText(txt.getText() + text);
+                }
+            }
+        };
+        
+        for (int i = 0; i < NBOUTONS; i++) {
+            boutons[i].addActionListener(listener1);
+        }
+    }
+    /* 
+    private static void sendToServer(String message, InetAddress address, int port) throws IOException {
+        byte[] buf = message.getBytes();
+        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
+        
+        // Try sending multiple times to increase reliability
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                socket.send(packet);
+                System.out.println("Sent to server: " + message);
+                // Successfully sent, no need for further attempts
+                break;
+            } catch (IOException e) {
+                System.out.println("Send attempt " + (attempt + 1) + " failed: " + e.getMessage());
+                if (attempt == 2) {
+                    // Rethrow on last attempt
+                    throw e;
+                }
+                // Wait a bit before retrying
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    } */
+   //bech nzid hnee methode ili taaal checksum w taaabth liserveur (ili fi comment edika lakdima)
+
+   private static void sendToServer(String message, InetAddress address, int port) throws IOException {
+    // Calculate checksum for message
+    int checksum = calculateChecksum(message);
+    // Combine message and checksum
+    String messageWithChecksum = message + "|" + checksum;
+    String sending=messageWithChecksum.trim();
+    byte[] buf = sending.getBytes();
+    DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
+    socket.send(packet);
+    
+}
+
+private static int calculateChecksum(String message) {
+    // Simple checksum: sum of character values
+    int sum = 0;
+    for (char c : message.toCharArray()) {
+        sum += c;
+    }
+    return sum;
+}
+
+    private static String receiveFromServer() throws IOException {
+        // Set timeout to 2 seconds (more reasonable than 1 second)
+        socket.setSoTimeout(2000);
+        
+        byte[] buffer = new byte[4096];
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        
+        try {
+            socket.receive(packet);
+            String result = new String(packet.getData(), 0, packet.getLength());
+            System.out.println("Received from server: " + result);
+            return result;
+        } catch (SocketTimeoutException e) {
+            System.out.println("Socket timeout occurred");
+            
+            // Try one more time before giving up
+            try {
+                System.out.println("Attempting second receive...");
+                socket.receive(packet);
+                String result = new String(packet.getData(), 0, packet.getLength());
+                System.out.println("Received on second attempt: " + result);
+                return result;
+            } catch (Exception ex) {
+                System.out.println("Second receive attempt failed: " + ex.getMessage());
+                // Return appropriate error message
+                return "Erreur: Serveur ne répond pas";
+            }
+        } finally {
+            // Reset timeout for future operations
+            socket.setSoTimeout(0);
+        }
+    }
+}
