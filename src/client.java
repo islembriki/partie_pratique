@@ -164,7 +164,7 @@ public class client {
     // Combine message and checksum
     String messageWithChecksum = message + "|" + checksum;
     String sending=messageWithChecksum.trim();
-    byte[] buf = sending.getBytes();
+    byte[] buf = sending.getBytes();//thwlk li bytes li des octets , ken tiksl a2 bytes koulch alia ksmt ala 16bits -->hexadecima
     DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
     socket.send(packet); 
 }
@@ -176,12 +176,41 @@ public class client {
         }
         return sum;
     }*/
+// hedi bi bytes 
+/*
+ * private static int calculateChecksum(String data) {
+    // Convert data to bytes
+    byte[] byteArray = data.getBytes();
+    
+    // Sum variable to accumulate the checksum
+    int sum = 0;
+    
+    // Process the byte array in 2-byte chunks
+    for (int i = 0; i < byteArray.length; i += 2) {
+        // Get the 16-bit word (2 bytes)
+        int word = byteArray[i] & 0xFF; // Get the first byte
+        if (i + 1 < byteArray.length) {
+            word = (word << 8) | (byteArray[i + 1] & 0xFF); // Combine with the second byte
+        }
+        
+        // Add the 16-bit word to the sum
+        sum += word;
+        
+        // If sum overflows, wrap around the overflow (carry)
+        if ((sum & 0xFFFF) < word) {
+            sum++; // Carry the overflow back into the sum
+        }
+    }
+    
+    // Now apply one's complement (invert all bits)
+    sum = ~sum & 0xFFFF; // Only keep the lower 16 bits
+    
+    return sum; // This is the checksum
+}
 
+ */
 
-
-
-
-    //methode maakda taa checksum 
+//methode maakda taa checksum 
     private static int calculateChecksum(String message) {
         // Define the word size in bits
         final int WORD_SIZE = 16; // 16-bit words
@@ -198,13 +227,11 @@ public class client {
             }
             bitRepresentation.append(binaryChar);
         }
-        
         // Ensure the bit representation length is a multiple of WORD_SIZE
         // by padding with zeros if necessary
         while (bitRepresentation.length() % WORD_SIZE != 0) {
             bitRepresentation.append("0");
         }
-        
         // Divide the bits into words and sum them
         int sum = 0;
         for (int i = 0; i < bitRepresentation.length(); i += WORD_SIZE) {
@@ -214,20 +241,11 @@ public class client {
             int wordValue = Integer.parseInt(word, 2);
             sum += wordValue;
         }
-        
         // Take only the least significant CHECKSUM_SIZE bits
         // This is done by using a bitmask: (1 << CHECKSUM_SIZE) - 1
         int checksum = sum & ((1 << CHECKSUM_SIZE) - 1);
-        
         return checksum;
     }
-
-
-
-
-
-
-
 
     private static String receiveFromServer() throws IOException {
         // Set timeout to 2 seconds (more reasonable than 1 second)

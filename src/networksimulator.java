@@ -63,6 +63,7 @@ public class networksimulator {
    private static String introduceError(String data) {
     // Split the message and checksum based on the '|' separator
     String[] parts = data.split("\\|");
+    //ghalta fi dataload bark 
     
     if (parts.length > 1) {
         String message = parts[0];  // The part before the '|'
