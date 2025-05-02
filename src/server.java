@@ -158,42 +158,46 @@ public class server {
             } else if (ch == '+' || ch == '-' || ch == '*' || ch == '/') {
                 //appliquer les operateurs de plus haute precedence avant d'ajouter l'operateur courant (on fera l'appel des methodes precedence et applyOp)
                 while (!operators.isEmpty() && precedence(operators.peek()) >= precedence(ch)) {
-                    double b = numbers.pop();
-                    double a = numbers.pop();
-                    numbers.push(applyOp(a, b, operators.pop()));
+                    double b = numbers.pop();//extraire le dernier nombre de la pile des nombres
+                    double a = numbers.pop();//extraire le deuxieme nombre de la pile des nombres
+                    numbers.push(applyOp(a, b, operators.pop()));//appliquer l'operateur courant sur les deux nombres extraits de la pile des nombres
                 }
-                operators.push(ch);
+                operators.push(ch);//ajouter l'operateur courant a la pile des operateurs
                 i++;
-            } else if (ch == '%') {
+            } else if (ch == '%') {//si le caractere est un pourcentage, on l'ajoute a la pile des operateurs
                 i++;
-            } else {
+            } else {//si le caractere n'est pas un chiffre, un operateur ou un pourcentage, on l'ignore
                 throw new IllegalArgumentException("Caractère invalide: " + ch);
             }
         }
-        while (!operators.isEmpty()) {
+        while (!operators.isEmpty()) {//appliquer les operateurs restants dans la pile des operateurs
             double b = numbers.pop();
             double a = numbers.pop();
-            numbers.push(applyOp(a, b, operators.pop()));
+            numbers.push(applyOp(a, b, operators.pop()));//appliquer l'operateur courant sur les deux nombres extraits de la pile des nombres
         }
         return numbers.pop();
     }
+    // Methode pour determiner la precedence de l'operateur
     public static int precedence(char op) {
         switch (op) {
             case '+':
             case '-':
-                return 1;
+                return 1;//precedence de l'addition et de la soustraction
             case '*':
-            case '/':
+            case '/'://precedence de la multiplication et de la division
                 return 2;
         }
-        return -1;
+        return -1;//precedence par defaut
     }
+    // Methode pour appliquer l'operateur sur deux nombres
     public static double applyOp(double a, double b, char op) {
-        // Convert numbers to their binary string representations with decimal points
-        String binaryA = doubleToBinaryString(a);
+        //notre but est de creer une calculatrice binaire alors on doit convertir les nombres en binaire avant d'appliquer l'operateur avec la methode applyOp
+        // on va utiliser la methode doubleToBinaryString pour convertir le nombre en binaire
+        // et la methode binaryStringToDouble pour convertir le resultat en decimal avant de le renvoyer au client
+        String binaryA = doubleToBinaryString(a);//
         String binaryB = doubleToBinaryString(b);
         String resultBinary;
-        switch (op) {
+        switch (op) {//on applique l'operateur sur les deux nombres avec l'appel des methodes de calcul binaire 
             case '+':
                 resultBinary = binaryAdd(binaryA, binaryB);
                 break;
@@ -214,15 +218,7 @@ public class server {
 
         return binaryStringToDouble(resultBinary);
     }
-    // Convert a double to a binary string with decimal point//khtr adition ta
-    // azouza tlwj taaml kisma fi wist bi . w ken dima bi norme iee moch mnjm
-    // yalkaha
-    /*
-     * The error you were seeing "Index 1 out of bounds for length 1" was
-     * because your friend's code expected strings with decimal points,
-     * but your code was passing IEEE 754 binary representations without decimal
-     * points.
-     */
+    // Convertir un nombre décimal en une chaîne binaire avec une partie fractionnaire
     private static String doubleToBinaryString(double num) {
         if (num == 0)
             return "0.0";
@@ -251,7 +247,7 @@ public class server {
         result.append(fracBinary.length() > 0 ? fracBinary.toString() : "0");
         return (isNegative ? "-" : "") + result.toString();
     }
-    // Convert a binary string with decimal point to a double
+    // Convertir une chaîne binaire en un nombre décimal
     private static double binaryStringToDouble(String binary) {
         boolean isNegative = binary.startsWith("-");
         if (isNegative)
