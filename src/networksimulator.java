@@ -43,7 +43,10 @@ public class networksimulator {
             clientSocket.send(clientResponsePacket);
         }
     }
-    
+    //hne ki aawdt thabt lkit inha tnjm taaml error hata fi checksum bidou donc hani amlt introduce error okhra tbdlch fi checksum
+    //w kolt nkhtarou ken tbuha hata mi checksum taaml fih ghalta w ila le 
+    //hedi taaml ghalta fi checksum  
+    /*
     private static String introduceError(String data) {
         // Simple error: change a random character
         char[] chars = data.toCharArray();
@@ -52,5 +55,30 @@ public class networksimulator {
             chars[pos] = (char)(chars[pos] + 1); // Change one character
         }
         return new String(chars);
+    } */
+
+    
+   //hedi taamlch ghlta , ken fi donne taaml:
+   private static String introduceError(String data) {
+    // Split the message and checksum based on the '|' separator
+    String[] parts = data.split("\\|");
+    
+    if (parts.length > 1) {
+        String message = parts[0];  // The part before the '|'
+        String checksum = parts[1]; // The part after the '|'
+        
+        // Introduce error in the message part
+        char[] messageChars = message.toCharArray();
+        if (messageChars.length > 0) {
+            int pos = (int)(Math.random() * messageChars.length); // Random position in the message part
+            messageChars[pos] = (char)(messageChars[pos] + 1);  // Modify one character
+        }
+        
+        // Recombine the message and checksum
+        return new String(messageChars) + "|" + checksum;
+    } else {
+        // If no checksum exists, just return the original data
+        return data;
     }
+}
 }
