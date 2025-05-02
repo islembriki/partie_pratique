@@ -1,37 +1,41 @@
+//importer les bibliotheques necessaires pour l'implementation des datagrams sockets(UDP)
 import java.io.*;
 import java.net.*;
 import java.util.Stack;
-
 public class server {
-    public static int port = 1234;
-    private static DatagramSocket socket;
-
-    public static void main(String[] args) throws Exception {
-        socket = new DatagramSocket(port);
-        System.out.println("Server is running on port " + port);
+    public static int port = 1234;//port d'ecoute du serveur
+    private static DatagramSocket socket;// Creation d'un socket datagramme pour l'ecoute des messages UDP
+    public static void main(String[] args) throws Exception {//methode principale qui demarre le serveur 
+        socket = new DatagramSocket(port);//initialisation du socket avec le port d'ecoute
+        System.out.println("Server is running on port " + port);//affichage d'un message dans le terminal qui indique l'etat de serveur
+        // Boucle infinie pour toujours recevoir les messages des clients
         while (true) {
-            byte[] buffer = new byte[1024];
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            socket.receive(packet);
+            byte[] buffer = new byte[1024];//buffer pour stocker les messages recus
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);//creation du paquet udp pour recevoir les messages
+            socket.receive(packet);//recevoir le paquet udp (c'est un appel bloquant jusqu'a ce qu'un message soit recu)
             String messageWithChecksum = new String(packet.getData(), 0, packet.getLength());
-            System.out.println("Received: " + messageWithChecksum);
-            // Split message and checksum
-            String[] parts = messageWithChecksum.split("\\|");
-            if (parts.length != 2) {
+            //extraire les donnes du paquet udp recu et les convertir en une chaine de caracteres
+            System.out.println("Received: " + messageWithChecksum);//afficher le message recu dans le terminal (pour debug et log)
+            String[] parts = messageWithChecksum.split("\\|");//separer le message recu en deux parties: la chaine de caracteres et le checksum
+            //( car le client envoie le message avec le checksum sous la forme "message|checksum")
+            if (parts.length != 2) {//valider que le format du message a deux parties 
                 sendToClient("Erreur: Format invalide", packet.getAddress(), packet.getPort());
                 continue;
             }
-            String message = parts[0];
+            String message = parts[0];//extraire la chaine de caracteres du message recu (l'expression mathematique a calculer)
             int receivedChecksum;
             try {
-                receivedChecksum = Integer.parseInt(parts[1]);
-            } catch (NumberFormatException e) {
+                receivedChecksum = Integer.parseInt(parts[1]);//extraire le checksum du message recu et le convertir en entier
+            } catch (NumberFormatException e) {//si le checksum n'est pas un entier valide, envoyer un message d'erreur au client
                 sendToClient("Erreur: Checksum invalide", packet.getAddress(), packet.getPort());
                 continue;
             }
-            // Calculate checksum on received message
+            // Calculer le checksum de la chaîne de caractères reçue
             int calculatedChecksum = calculateChecksum(message);
-            // Compare checksums
+            // Comparer le checksum reçu avec le checksum calculé
+            //il est a noter que le checksum ne peut pas etre faux car la classe networksimulator induce une erreur uniquememnt dans la partie de donnees 
+            // Si les checksums ne correspondent pas, envoyer un message d'erreur au client
+            // Sinon, traiter la chaîne de caractères comme d'habitude
             if (calculatedChecksum != receivedChecksum) {
                 System.out.println("Checksum error: expected " + receivedChecksum +
                         ", calculated " + calculatedChecksum);
@@ -48,19 +52,6 @@ public class server {
             }
         }
     }
-
-    /*
-     * private static int calculateChecksum(String message) {
-     * // Same method as in client
-     * int sum = 0;
-     * for (char c : message.toCharArray()) {
-     * sum += c;
-     * }
-     * return sum;
-     * }
-     */
-    // methode maakda taa checksum
-
     private static int calculateChecksum(String message) {
         // Define the word size in bits
         final int WORD_SIZE = 16; // 16-bit words
@@ -77,13 +68,11 @@ public class server {
             }
             bitRepresentation.append(binaryChar);
         }
-
         // Ensure the bit representation length is a multiple of WORD_SIZE
         // by padding with zeros if necessary
         while (bitRepresentation.length() % WORD_SIZE != 0) {
             bitRepresentation.append("0");
         }
-
         // Divide the bits into words and sum them
         int sum = 0;
         for (int i = 0; i < bitRepresentation.length(); i += WORD_SIZE) {
@@ -93,7 +82,6 @@ public class server {
             int wordValue = Integer.parseInt(word, 2);
             sum += wordValue;
         }
-
         // Take only the least significant CHECKSUM_SIZE bits
         // This is done by using a bitmask: (1 << CHECKSUM_SIZE) - 1
         int checksum = sum & ((1 << CHECKSUM_SIZE) - 1);
@@ -101,11 +89,9 @@ public class server {
         checksum = ~checksum & ((1 << CHECKSUM_SIZE) - 1); // Invert bits and keep only CHECKSUM_SIZE bits
         return checksum;
     }
-
     private static void sendToClient(String message, InetAddress address, int port) throws IOException {
         byte[] buf = message.getBytes();
         DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
-
         // Try sending multiple times to increase reliability
         for (int attempt = 0; attempt < 3; attempt++) {
             try {
@@ -129,8 +115,7 @@ public class server {
             }
         }
     }
-
-    // shuning yard
+    // shuning yard pour evaluer une longue expression arithmetique 
     public static double calculate(String expression) {
         expression = expression.replace("÷", "/").replace("x", "*").replaceAll(" ", "");
         Stack<Double> numbers = new Stack<>();
@@ -181,7 +166,6 @@ public class server {
         }
         return numbers.pop();
     }
-
     public static int precedence(char op) {
         switch (op) {
             case '+':
@@ -193,7 +177,6 @@ public class server {
         }
         return -1;
     }
-
     public static double applyOp(double a, double b, char op) {
         // Convert numbers to their binary string representations with decimal points
         String binaryA = doubleToBinaryString(a);
@@ -220,7 +203,6 @@ public class server {
 
         return binaryStringToDouble(resultBinary);
     }
-
     // Convert a double to a binary string with decimal point//khtr adition ta
     // azouza tlwj taaml kisma fi wist bi . w ken dima bi norme iee moch mnjm
     // yalkaha
@@ -258,7 +240,6 @@ public class server {
         result.append(fracBinary.length() > 0 ? fracBinary.toString() : "0");
         return (isNegative ? "-" : "") + result.toString();
     }
-
     // Convert a binary string with decimal point to a double
     private static double binaryStringToDouble(String binary) {
         boolean isNegative = binary.startsWith("-");
@@ -284,12 +265,10 @@ public class server {
         }
         return isNegative ? -result : result;
     }
-
     // Binary addition for strings with decimal points
     private static String binaryAdd(String a, String b) {
         boolean aIsNegative = a.startsWith("-");
         boolean bIsNegative = b.startsWith("-");
-
         if (aIsNegative && !bIsNegative) {
             return binarySubtract(b, a.substring(1));
         } else if (!aIsNegative && bIsNegative) {
@@ -298,14 +277,11 @@ public class server {
             String result = binaryAdd(a.substring(1), b.substring(1));
             return "-" + result;
         }
-
         StringBuilder result = new StringBuilder();
         int carry = 0;
-
         // Split into integer and fractional parts
         String[] partsA = a.split("\\.");
         String[] partsB = b.split("\\.");
-
         // Align the fractional parts
         int maxFractionLength = Math.max(
                 partsA.length > 1 ? partsA[1].length() : 0,
@@ -327,7 +303,6 @@ public class server {
             carry = sum / 2;
         }
         fracResult.reverse();
-
         // Add integer parts from right to left
         String intA = partsA[0];
         String intB = partsB[0];

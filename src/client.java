@@ -1,11 +1,10 @@
+//importer les libraries nécessaires pour les components GUI et la communication réseau
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Stack;
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
 public class client {
     private static DatagramSocket socket;
     private static InetAddress serverAddress;
@@ -83,12 +82,9 @@ public class client {
                     txt.setText("");
                     txt.setForeground(Color.BLACK); 
                 } else if ("=".equals(text)) {
-                    
                     String expression = txt.getText();
-                    
                     // Disable the text field while processing
                     txt.setEnabled(false);
-                    
                     // Use SwingWorker to perform network operations in background
                     SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
                         @Override
@@ -167,49 +163,7 @@ public class client {
     byte[] buf = sending.getBytes();//thwlk li bytes li des octets , ken tiksl a2 bytes koulch alia ksmt ala 16bits -->hexadecima
     DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
     socket.send(packet); 
-}
-   /* private static int calculateChecksum(String message) {
-        // Simple checksum: sum of character values
-        int sum = 0;
-        for (char c : message.toCharArray()) {
-            sum += c;
-        }
-        return sum;
-    }*/
-// hedi bi bytes 
-/*
- * private static int calculateChecksum(String data) {
-    // Convert data to bytes
-    byte[] byteArray = data.getBytes();
-    
-    // Sum variable to accumulate the checksum
-    int sum = 0;
-    
-    // Process the byte array in 2-byte chunks
-    for (int i = 0; i < byteArray.length; i += 2) {
-        // Get the 16-bit word (2 bytes)
-        int word = byteArray[i] & 0xFF; // Get the first byte
-        if (i + 1 < byteArray.length) {
-            word = (word << 8) | (byteArray[i + 1] & 0xFF); // Combine with the second byte
-        }
-        
-        // Add the 16-bit word to the sum
-        sum += word;
-        
-        // If sum overflows, wrap around the overflow (carry)
-        if ((sum & 0xFFFF) < word) {
-            sum++; // Carry the overflow back into the sum
-        }
-    }
-    
-    // Now apply one's complement (invert all bits)
-    sum = ~sum & 0xFFFF; // Only keep the lower 16 bits
-    
-    return sum; // This is the checksum
-}
-
- */
-
+} 
 //methode maakda taa checksum 
     private static int calculateChecksum(String message) {
         // Define the word size in bits
@@ -248,7 +202,6 @@ public class client {
         checksum = ~checksum & ((1 << CHECKSUM_SIZE) - 1); // Invert bits and keep only CHECKSUM_SIZE bits
         return checksum;
     }
-
     private static String receiveFromServer() throws IOException {
         // Set timeout to 2 seconds (more reasonable than 1 second)
         socket.setSoTimeout(2000);
