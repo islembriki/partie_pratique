@@ -93,7 +93,8 @@ public class server {
     // Take only the least significant CHECKSUM_SIZE bits
     // This is done by using a bitmask: (1 << CHECKSUM_SIZE) - 1
     int checksum = sum & ((1 << CHECKSUM_SIZE) - 1);
-    
+    // Apply one's complement to the checksum
+    checksum = ~checksum & ((1 << CHECKSUM_SIZE) - 1); // Invert bits and keep only CHECKSUM_SIZE bits
     return checksum;
 }
 
