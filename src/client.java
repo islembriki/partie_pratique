@@ -3,235 +3,236 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+//Importer les bibliothèques d'E/S et de réseau pour la communication UDP
 import java.io.*;
 import java.net.*;
 public class client {
-    private static DatagramSocket socket;
-    private static InetAddress serverAddress;
-    private static int server_port = 5678; // Port for network simulator
-    private static String server_ip = "localhost";
+   
+    private static DatagramSocket socket;// UDP socket pour la communication
+    private static InetAddress serverAddress;// adresse ip du serveur pour l'envoie des packets'
+    private static int server_port = 5678; // Port pour le simulateur de réseau
+    private static String server_ip = "localhost";//addresse IP du serveur, localhost pour le test local
     public static void main(String[] args) {
-        final int NBOUTONS = 20;
-        JButton[] boutons;
-        JTextField txt;
-        JPanel pan;
-        JFrame frame = new JFrame("Calculatrice");
-        frame.setSize(300, 400);
-        Container contenu = frame.getContentPane();
-        contenu.setLayout(new BorderLayout(10, 20));
-        contenu.setBackground(new Color(42, 75, 124)); 
-        pan = new JPanel();
-        pan.setBackground(new Color(42, 75, 124)); 
-        txt = new JTextField();
-        txt.setFont(new Font("Thaoma", Font.PLAIN, 20));
-        txt.setHorizontalAlignment(JTextField.RIGHT);
-        txt.setPreferredSize(new Dimension(0, 40));
-        JPanel txtWrapper = new JPanel(new BorderLayout());
-        txtWrapper.setBorder(new EmptyBorder(10, 10, 0, 10)); 
-        txtWrapper.add(txt, BorderLayout.CENTER);
-        txtWrapper.setBackground(new Color(42, 75, 124)); 
-        contenu.add(txtWrapper, BorderLayout.NORTH);
-        pan.setLayout(new GridLayout(5, 4, 5, 5));
-        boutons = new JButton[NBOUTONS];
-        String[] b = {"C","±","%","÷","7","8","9","x","4","5","6","-","1","2","3","+","0",".","DEL","="};
+        final int NBOUTONS = 20;//nombre de boutons sur la calculatrice
+        JButton[] boutons;//tableau de boutons
+        JTextField txt;//champ de texte pour afficher les résultats et les entrées
+        JPanel pan;//panel pour les boutons
+        JFrame frame = new JFrame("Calculatrice");//création de la fenêtre principale
+        frame.setSize(300, 400);//taille de la fenêtre
+        Container contenu = frame.getContentPane();//contenu de la fenêtre
+        contenu.setLayout(new BorderLayout(10, 20));//ajout d'un espacement entre les composants
+        contenu.setBackground(new Color(42, 75, 124)); // couleur de fond de la fenêtre
+        pan = new JPanel();//panel pour les boutons
+        pan.setBackground(new Color(42, 75, 124));// couleur de fond du panel 
+        txt = new JTextField();//champ de texte pour afficher les résultats et les entrées
+        txt.setFont(new Font("Thaoma", Font.PLAIN, 20));//police du texte et taille
+        txt.setHorizontalAlignment(JTextField.RIGHT);//alignement du texte à droite
+        txt.setPreferredSize(new Dimension(0, 40));//taille du champ de texte
+        JPanel txtWrapper = new JPanel(new BorderLayout()); //panel pour le champ de texte
+        txtWrapper.setBorder(new EmptyBorder(10, 10, 0, 10)); //ajout d'une bordure au champ de texte
+        txtWrapper.add(txt, BorderLayout.CENTER);//ajout du champ de texte au panel
+        txtWrapper.setBackground(new Color(42, 75, 124)); // couleur de fond du panel
+        contenu.add(txtWrapper, BorderLayout.NORTH);//ajout du panel au contenu de la fenêtre
+        pan.setLayout(new GridLayout(5, 4, 5, 5));  //ajout d'une grille de 5 lignes et 4 colonnes pour les boutons
+        boutons = new JButton[NBOUTONS];//initialisation du tableau de boutons
+        String[] b = {"C","±","%","÷","7","8","9","x","4","5","6","-","1","2","3","+","0",".","DEL","="};//tableau de texte pour les boutons
         for (int i = 0; i < NBOUTONS; i++) {
-            boutons[i] = new JButton(b[i]);
-            boutons[i].setFont(new Font("Arial", Font.BOLD, 16));
-            boutons[i].setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-            boutons[i].setFocusPainted(true);
+            boutons[i] = new JButton(b[i]);//initialisation des boutons avec le texte du tableau
+            boutons[i].setFont(new Font("Arial", Font.BOLD, 16));//police du texte et taille
+            boutons[i].setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));//ajout d'une bordure aux boutons
+            boutons[i].setFocusPainted(true); //focus sur le bouton cliqué
             if (i >= 4 && i <= 6 || i >= 8 && i <= 10 || i >= 12 && i <= 14 || i == 16) {
-                boutons[i].setBackground(new Color(255, 180, 76)); 
-                boutons[i].setForeground(Color.BLACK);
+                boutons[i].setBackground(new Color(255, 180, 76)); // couleur orange pour les boutons numériques
+                boutons[i].setForeground(Color.BLACK);// couleur du texte en noir
             } else {
                 
-                boutons[i].setBackground(Color.LIGHT_GRAY);
-                boutons[i].setForeground(Color.BLACK);
+                boutons[i].setBackground(Color.LIGHT_GRAY);// couleur gris clair pour les autres boutons
+                boutons[i].setForeground(Color.BLACK);// couleur du texte en noir
             }
             
             if (i == 19) { 
-                boutons[i].setBackground(new Color(169, 169, 169)); 
+                boutons[i].setBackground(new Color(169, 169, 169)); // couleur gris pour le bouton "="
             }
 
-            pan.add(boutons[i]);
+            pan.add(boutons[i]);//ajout des boutons au panel
         }
-        JPanel panWrapper = new JPanel(new BorderLayout());
-        panWrapper.setBorder(new EmptyBorder(0, 10, 10, 10));
-        panWrapper.add(pan, BorderLayout.CENTER);
-        panWrapper.setBackground(new Color(42, 75, 124));
-        contenu.add(panWrapper, BorderLayout.CENTER);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        try {
-            socket = new DatagramSocket();
-            serverAddress = InetAddress.getByName(server_ip);
+        JPanel panWrapper = new JPanel(new BorderLayout());//panel pour le panel de boutons
+        panWrapper.setBorder(new EmptyBorder(0, 10, 10, 10));//ajout d'une bordure au panel de boutons
+        panWrapper.add(pan, BorderLayout.CENTER);//ajout du panel de boutons au panel wrapper
+        panWrapper.setBackground(new Color(42, 75, 124));// couleur de fond du panel wrapper
+        contenu.add(panWrapper, BorderLayout.CENTER);//ajout du panel wrapper au contenu de la fenêtre
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//fermeture de la fenêtre à la fermeture de l'application
+        frame.setLocationRelativeTo(null);//centrer la fenêtre sur l'écran
+        frame.setVisible(true);//afficher la fenêtre
+        try {//Initialiser le socket et l'adresse du serveur
+            socket = new DatagramSocket();// Créer un socket UDP
+            serverAddress = InetAddress.getByName(server_ip);// Convertir l'adresse IP du serveur en InetAddress
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(frame, "Socket init failed: " + e.getMessage());
+            JOptionPane.showMessageDialog(frame, "Socket init failed: " + e.getMessage());//afficher un message d'erreur si l'initialisation échoue
         }
-        ActionListener listener1 = new ActionListener() {
+        ActionListener listener1 = new ActionListener() {//écouteur d'événements pour les boutons
             @Override
-            public void actionPerformed(ActionEvent e) {
-                JButton source = (JButton) e.getSource();
-                String text = source.getText();
+            public void actionPerformed(ActionEvent e) {//méthode appelée lors d'un clic sur un bouton
+                JButton source = (JButton) e.getSource();//obtenir le bouton cliqué
+                String text = source.getText();//obtenir le texte du bouton
                 
-                if ("+x÷%-".contains(text)) {
-                    if (txt.getText().length() > 0) {
-                        txt.setText(txt.getText() + text);
+                if ("+x÷%-".contains(text)) {//si le texte du bouton est un opérateur
+                    if (txt.getText().length() > 0) {//si le champ de texte n'est pas vide
+                        txt.setText(txt.getText() + text);//ajouter l'opérateur au champ de texte
                     }
-                } else if ("C".equals(text)) {
-                    txt.setText("");
-                    txt.setForeground(Color.BLACK); 
-                } else if ("=".equals(text)) {
-                    String expression = txt.getText();
-                    // Disable the text field while processing
-                    txt.setEnabled(false);
-                    // Use SwingWorker to perform network operations in background
-                    SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+                } else if ("C".equals(text)) {//si le bouton cliqué est "C"
+                    txt.setText("");//vider le champ de texte
+                    txt.setForeground(Color.BLACK); // remettre la couleur du texte en noir
+                } else if ("=".equals(text)) {//si le bouton cliqué est "="
+                    String expression = txt.getText();//obtenir l'expression du champ de texte
+                    
+                    txt.setEnabled(false);// désactiver le champ de texte pendant le traitement
+                   
+                    SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {//classe SwingWorker utitaire pour exécuter le traitement en arrière-plan
                         @Override
-                        protected String doInBackground() throws Exception {
+                        protected String doInBackground() throws Exception {//méthode exécutée en arrière-plan
                             try {
-                                sendToServer(expression, serverAddress, server_port);
-                                return receiveFromServer();
+                                sendToServer(expression, serverAddress, server_port);//envoyer l'expression au serveur
+
+                                return receiveFromServer();//recevoir la réponse du serveur
                             } catch (Exception ex) {
-                                return "Erreur: " + ex.getMessage();
+                                return "Erreur: " + ex.getMessage();//retourner un message d'erreur si une exception se produit
                                 
                             }
                         }
                         @Override
-                        protected void done() {
+                        protected void done() {//méthode appelée lorsque le traitement en arrière-plan est terminé
                             try {
-                                String result = get();
-                                if (result.startsWith("Erreur:")) {
-                                    txt.setText(result);
-                                    txt.setForeground(Color.RED);
+                                String result = get();//obtenir le résultat du traitement
+                                if (result.startsWith("Erreur:")) {//si le résultat commence par "Erreur:"
+                                    txt.setText(result);//afficher le message d'erreur dans le champ de texte
+                                    txt.setForeground(Color.RED);// changer la couleur du texte en rouge
                                 } else {
-                                    txt.setText(result);
-                                    txt.setForeground(Color.BLACK);
+                                    txt.setText(result);//afficher le résultat dans le champ de texte
+                                    txt.setForeground(Color.BLACK);// remettre la couleur du texte en noir
                                 }
                             } catch (Exception e) {
-                                txt.setText("Erreur: " + e.getMessage());
-                                txt.setForeground(Color.RED);
+                                txt.setText("Erreur: " + e.getMessage());//afficher un message d'erreur si une exception se produit
+                                txt.setForeground(Color.RED);// changer la couleur du texte en rouge
                             } finally {
-                                txt.setEnabled(true);
+                                txt.setEnabled(true);// réactiver le champ de texte
                             }
                         }
                     };
-                    worker.execute();
-                } else if (".".equals(text)) {
-                    if (txt.getText().length() > 0 && !txt.getText().endsWith(".")) {
-                        // Check if the current number already has a decimal point
-                        String currentText = txt.getText();
+                    worker.execute();//exécuter le traitement en arrière-plan
+                } else if (".".equals(text)) {//si le bouton cliqué est "." c'est pour ajouter un point décimal
+                    if (txt.getText().length() > 0 && !txt.getText().endsWith(".")) {//si le champ de texte n'est pas vide et ne se termine pas par "."
+                        String currentText = txt.getText();//obtenir le texte actuel du champ de texte
                         int lastOperatorIndex = Math.max(
                             Math.max(currentText.lastIndexOf('+'), currentText.lastIndexOf('-')),
                             Math.max(currentText.lastIndexOf('x'), currentText.lastIndexOf('÷'))
-                        );
+                        );//trouver le dernier opérateur dans le texte
                         
-                        String currentNumber = currentText.substring(lastOperatorIndex + 1);
-                        if (!currentNumber.contains(".")) {
-                            txt.setText(currentText + text);
+                        String currentNumber = currentText.substring(lastOperatorIndex + 1);//obtenir le nombre actuel après le dernier opérateur
+                        if (!currentNumber.contains(".")) {//si le nombre actuel ne contient pas de "."
+                            txt.setText(currentText + text);//ajouter "." au texte actuel
                         }
                     }
-                } else if ("±".equals(text)) {
-                    String currentText = txt.getText();
-                    if (currentText.length() > 0) {
-                        if (currentText.startsWith("-")) {
-                            txt.setText(currentText.substring(1));
-                        } else {
-                            txt.setText("-" + currentText);
+                } else if ("±".equals(text)) {//si le bouton cliqué est "±" c'est pour changer le signe du nombre
+                    String currentText = txt.getText();//obtenir le texte actuel du champ de texte
+                    if (currentText.length() > 0) {//si le champ de texte n'est pas vide
+                        if (currentText.startsWith("-")) {//si le texte actuel commence par "-"
+                            txt.setText(currentText.substring(1));//supprimer le "-" du texte actuel
+                        } else {//si le texte actuel ne commence pas par "-"
+                            txt.setText("-" + currentText);//
                         }
                     }
-                } else if ("DEL".equals(text)) {
-                    String currentText = txt.getText();
-                    if (currentText.length() > 0) {
-                        txt.setText(currentText.substring(0, currentText.length() - 1));
+                } else if ("DEL".equals(text)) {//si le bouton cliqué est "DEL" c'est pour supprimer le dernier caractère
+                    String currentText = txt.getText();//obtenir le texte actuel du champ de texte
+                    if (currentText.length() > 0) {//si le champ de texte n'est pas vide
+                        txt.setText(currentText.substring(0, currentText.length() - 1));//supprimer le dernier caractère du texte actuel
                     }
                 } else {
-                    txt.setText(txt.getText() + text);
+                    txt.setText(txt.getText() + text);//ajouter le texte du bouton au champ de texte
                 }
             }
         };
         for (int i = 0; i < NBOUTONS; i++) {
-            boutons[i].addActionListener(listener1);
+            boutons[i].addActionListener(listener1);//ajouter l'écouteur d'événements à chaque bouton
         }
     }
-   private static void sendToServer(String message, InetAddress address, int port) throws IOException {
-    // Calculate checksum for message
-    int checksum = calculateChecksum(message);
-    // Combine message and checksum
-    String messageWithChecksum = message + "|" + checksum;
-    String sending=messageWithChecksum.trim();
-    byte[] buf = sending.getBytes();//thwlk li bytes li des octets , ken tiksl a2 bytes koulch alia ksmt ala 16bits -->hexadecima
-    DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
-    socket.send(packet); 
+   private static void sendToServer(String message, InetAddress address, int port) throws IOException {//méthode pour envoyer un message au serveur
+   
+    int checksum = calculateChecksum(message);// Calculer le checksum du message
+    
+    String messageWithChecksum = message + "|" + checksum;// Ajouter le checksum au message
+    String sending=messageWithChecksum.trim();//trim pour enlever les espaces au debut et fin du message
+    byte[] buf = sending.getBytes();// Convertir le message en tableau d'octets
+    DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);// Créer un paquet UDP avec le message, l'adresse et le port du serveur
+    socket.send(packet); // Envoyer le paquet au serveur
 } 
-//methode maakda taa checksum 
-    private static int calculateChecksum(String message) {
-        // Define the word size in bits
-        final int WORD_SIZE = 16; // 16-bit words
-        final int CHECKSUM_SIZE = 16; // Final checksum will be 16 bits
+
+    private static int calculateChecksum(String message) {//méthode pour calculer le checksum du message
         
-        // Convert message to bit representation
+        final int WORD_SIZE = 16; //taille de mot de code 
+        final int CHECKSUM_SIZE = 16; //taille de checksum de code
+        
+      
         StringBuilder bitRepresentation = new StringBuilder();
-        for (char c : message.toCharArray()) {
-            // Convert each character to 16-bit binary representation
+        for (char c : message.toCharArray()) {// Convertir chaque caractère en représentation binaire
+           
             String binaryChar = Integer.toBinaryString(c);
-            // Pad to ensure 16 bits per character
-            while (binaryChar.length() < 16) {
-                binaryChar = "0" + binaryChar;
+           
+            while (binaryChar.length() < 16) {// Compléter avec des zéros à gauche pour atteindre 16 bits
+                binaryChar = "0" + binaryChar;//
             }
-            bitRepresentation.append(binaryChar);
+            bitRepresentation.append(binaryChar);// Ajouter la représentation binaire du caractère à la chaîne
         }
-        // Ensure the bit representation length is a multiple of WORD_SIZE
-        // by padding with zeros if necessary
+       
         while (bitRepresentation.length() % WORD_SIZE != 0) {
-            bitRepresentation.append("0");
+            bitRepresentation.append("0");// Compléter avec des zéros à droite pour atteindre un multiple de WORD_SIZE
         }
-        // Divide the bits into words and sum them
-        int sum = 0;
-        for (int i = 0; i < bitRepresentation.length(); i += WORD_SIZE) {
-            // Extract a word of WORD_SIZE bits
-            String word = bitRepresentation.substring(i, Math.min(i + WORD_SIZE, bitRepresentation.length()));
-            // Convert the binary word to an integer and add to sum
-            int wordValue = Integer.parseInt(word, 2);
-            sum += wordValue;
-        }
-        // Take only the least significant CHECKSUM_SIZE bits
-        // This is done by using a bitmask: (1 << CHECKSUM_SIZE) - 1
-        int checksum = sum & ((1 << CHECKSUM_SIZE) - 1);
-        // Apply one's complement to the checksum
-        checksum = ~checksum & ((1 << CHECKSUM_SIZE) - 1); // Invert bits and keep only CHECKSUM_SIZE bits
-        return checksum;
-    }
-    private static String receiveFromServer() throws IOException {
-        // Set timeout to 2 seconds (more reasonable than 1 second)
-        socket.setSoTimeout(2000);
         
-        byte[] buffer = new byte[4096];
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        int sum = 0;// Somme des mots de 16 bits
+        for (int i = 0; i < bitRepresentation.length(); i += WORD_SIZE) {
+            
+            String word = bitRepresentation.substring(i, Math.min(i + WORD_SIZE, bitRepresentation.length()));// Extraire un mot de 16 bits
+            
+            int wordValue = Integer.parseInt(word, 2);// Convertir le mot binaire en entier
+            sum += wordValue;// Ajouter la valeur du mot à la somme
+        }
+       
+        
+        int checksum = sum & ((1 << CHECKSUM_SIZE) - 1);// Garder seulement CHECKSUM_SIZE bits de la somme
+        
+        checksum = ~checksum & ((1 << CHECKSUM_SIZE) - 1); // Complément à un pour obtenir le checksum
+        return checksum;// Retourner le checksum
+    }
+    private static String receiveFromServer() throws IOException {//méthode pour recevoir un message du serveur
+    
+        socket.setSoTimeout(2000);  // Définir un délai d'attente de 2 secondes pour la réception
+        
+        byte[] buffer = new byte[4096];// Taille du tampon pour recevoir le message
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);// Créer un paquet pour recevoir le message
         
         try {
-            socket.receive(packet);
-            String result = new String(packet.getData(), 0, packet.getLength());
-            System.out.println("Received from server: " + result);
-            return result;
+            socket.receive(packet);// Recevoir le paquet du serveur
+            String result = new String(packet.getData(), 0, packet.getLength());// Convertir le message reçu en chaîne de caractères
+            System.out.println("Received from server: " + result);// Afficher le message reçu
+            return result;// Retourner le message reçu
         } catch (SocketTimeoutException e) {
-            System.out.println("Socket timeout occurred");
+            System.out.println("Socket timeout occurred");// Afficher un message d'erreur si le délai d'attente est dépassé
             
-            // Try one more time before giving up
+           
             try {
-                System.out.println("Attempting second receive...");
-                socket.receive(packet);
-                String result = new String(packet.getData(), 0, packet.getLength());
-                System.out.println("Received on second attempt: " + result);
-                return result;
+                System.out.println("Attempting second receive...");// Afficher un message pour indiquer la deuxième tentative de réception
+                socket.receive(packet);// Recevoir le paquet du serveur à nouveau
+                String result = new String(packet.getData(), 0, packet.getLength());// Convertir le message reçu en chaîne de caractères
+                System.out.println("Received on second attempt: " + result);// Afficher le message reçu
+                return result;// Retourner le message reçu
             } catch (Exception ex) {
-                System.out.println("Second receive attempt failed: " + ex.getMessage());
-                // Return appropriate error message
-                return "Erreur: Serveur ne répond pas";
+                System.out.println("Second receive attempt failed: " + ex.getMessage());// Afficher un message d'erreur si la deuxième tentative échoue
+                
+                return "Erreur: Serveur ne répond pas";// Retourner un message d'erreur si le serveur ne répond pas
             }
         } finally {
-            // Reset timeout for future operations
-            socket.setSoTimeout(0);
+            
+            socket.setSoTimeout(0);// Réinitialiser le délai d'attente à 0 pour désactiver le délai d'attente
         }
     }
 }

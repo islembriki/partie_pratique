@@ -1,6 +1,9 @@
 //importer les bibliotheques necessaires pour l'implementation des datagrams sockets(UDP)
 import java.io.*;
 import java.net.*;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 import java.util.Stack;
 public class server {
     public static int port = 1234;//port d'ecoute du serveur
@@ -37,115 +40,123 @@ public class server {
             // Si les checksums ne correspondent pas, envoyer un message d'erreur au client
             // Sinon, traiter la chaîne de caractères comme d'habitude
             if (calculatedChecksum != receivedChecksum) {
-                System.out.println("Checksum error: expected " + receivedChecksum +
-                        ", calculated " + calculatedChecksum);
-                sendToClient("Erreur: Données corrompues", packet.getAddress(), packet.getPort());
+                System.out.println("Checksum error: expected " + receivedChecksum + ", calculated " + calculatedChecksum);
+                sendToClient("Erreur: Données corrompues", packet.getAddress(), packet.getPort());  
             } else {
-                // Process as usual
+                // Proceder à l'évaluation de l'expression mathématique
                 try {
-                    double result = calculate(message);
-                    String resultStr = String.valueOf(result);
-                    sendToClient(resultStr, packet.getAddress(), packet.getPort());
+                    double result = calculate(message);//calculer le resultat de l'expression mathematique avec l'appel de la methode calculate qui evalue toute une expression mathematique 
+                    DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+                    DecimalFormat df = new DecimalFormat("0.######", symbols);
+                    String resultStr = String.valueOf(df.format(result));//convertir le resultat en une chaine de caracteres
+                    sendToClient(resultStr, packet.getAddress(), packet.getPort());//envoyer le resultat au client avec l'appel de la methode sendToClient qui envoie le message au client
                 } catch (Exception e) {
-                    sendToClient("Erreur: " + e.getMessage(), packet.getAddress(), packet.getPort());
+                    sendToClient("Erreur: " + e.getMessage(), packet.getAddress(), packet.getPort());//envoyer un message d'erreur au client si une exception est levee lors du calcul de l'expression
                 }
             }
         }
     }
+    // Calculer le checksum de la chaîne de caractères selon la methode etudiee en cours(deja expliquee dans le rapport )
     private static int calculateChecksum(String message) {
-        // Define the word size in bits
-        final int WORD_SIZE = 16; // 16-bit words
-        final int CHECKSUM_SIZE = 16; // Final checksum will be 16 bits
-
-        // Convert message to bit representation
-        StringBuilder bitRepresentation = new StringBuilder();
-        for (char c : message.toCharArray()) {
-            // Convert each character to 16-bit binary representation
+        //definir les constantes pour la taille des mots et la taille du checksum
+        final int WORD_SIZE = 16; //  mots de 16 bits 
+        final int CHECKSUM_SIZE = 16; //le checksum est de 16 bits (pour ne pas garder les retenues de la somme )
+        // Convertir le message en une représentation binaire
+        StringBuilder bitRepresentation = new StringBuilder();//creation d'un buffer pour stocker la representation binaire du message
+        for (char c : message.toCharArray()) {//parcourir chaque caractere de la chaine de caracteres recu
+            // Convertir chaque  caractere en binaire 
             String binaryChar = Integer.toBinaryString(c);
-            // Pad to ensure 16 bits per character
+            // on doit ajouter des zeros a gauche pour que chaque caractere soit de 16 bits (padding)
             while (binaryChar.length() < 16) {
                 binaryChar = "0" + binaryChar;
             }
-            bitRepresentation.append(binaryChar);
+            bitRepresentation.append(binaryChar);//ajouter la representation binaire du caractere au buffer
         }
-        // Ensure the bit representation length is a multiple of WORD_SIZE
-        // by padding with zeros if necessary
+        //s'assurer que la longueur de la representation binaire est un multiple de WORD_SIZE et ajouter des zeros a la fin si ce n'est pas le cas
         while (bitRepresentation.length() % WORD_SIZE != 0) {
             bitRepresentation.append("0");
         }
-        // Divide the bits into words and sum them
+        // Diviser la représentation binaire en mots de WORD_SIZE bits et calculer la somme
         int sum = 0;
         for (int i = 0; i < bitRepresentation.length(); i += WORD_SIZE) {
-            // Extract a word of WORD_SIZE bits
+            // Extraire un mot de WORD_SIZE bits 
             String word = bitRepresentation.substring(i, Math.min(i + WORD_SIZE, bitRepresentation.length()));
-            // Convert the binary word to an integer and add to sum
+            // Convertir le mot binaire en entier et l'ajouter à la somme (on peut faire la somme directement en binaire mais pour simplifier on le convertit en entier)
             int wordValue = Integer.parseInt(word, 2);
             sum += wordValue;
         }
-        // Take only the least significant CHECKSUM_SIZE bits
-        // This is done by using a bitmask: (1 << CHECKSUM_SIZE) - 1
+        //prendre uniquement les 16 bits de poids faible de la somme (car le checksum est de 16 bits)
+        // c'est fait en appliquant un masque de bits (bitwise AND) avec 0xFFFF (qui est 65535 en decimal et qui est 16 bits de 1)
         int checksum = sum & ((1 << CHECKSUM_SIZE) - 1);
-        // Apply one's complement to the checksum
-        checksum = ~checksum & ((1 << CHECKSUM_SIZE) - 1); // Invert bits and keep only CHECKSUM_SIZE bits
+        // Appliquer le complément à un  pour obtenir le checksum final
+        checksum = ~checksum & ((1 << CHECKSUM_SIZE) - 1);
         return checksum;
     }
+    // Methode pour envoyer un message au client
     private static void sendToClient(String message, InetAddress address, int port) throws IOException {
-        byte[] buf = message.getBytes();
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
-        // Try sending multiple times to increase reliability
+        byte[] buf = message.getBytes();//convertir le message en tableau d'octets
+        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);//creation d'un paquet udp pour envoyer le message au client
+        // essayer d'envoyer le paquet jusqu'à 3 fois en cas d'erreur pour la relabilité
         for (int attempt = 0; attempt < 3; attempt++) {
             try {
-                socket.send(packet);
-                System.out.println("Sent to client (" + address + ":" + port + "): " + message);
-                System.out.println("Message bytes sent: " + buf.length);
-                // Successfully sent, no need for further attempts
+                socket.send(packet);//envoyer le paquet udp au client
+                System.out.println("Sent to client (" + address + ":" + port + "): " + message);//afficher le message envoye au client dans le terminal (pour debug et log)
+                System.out.println("Message bytes sent: " + buf.length);//afficher le nombre d'octets envoyes au client (pour debug et log)
                 break;
-            } catch (IOException e) {
+            } catch (IOException e) {//si une erreur se produit lors de l'envoi du paquet, on va essayer d'envoyer le paquet jusqu'à 3 fois
                 System.out.println("Send attempt " + (attempt + 1) + " failed: " + e.getMessage());
                 if (attempt == 2) {
                     // Rethrow on last attempt
                     throw e;
                 }
-                // Wait a bit before retrying
+                // Attendre un court instant avant de réessayer 
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(50);//le thread principal attendre 50 ms avant de reessayer d'envoyer le paquet
                 } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
+                    Thread.currentThread().interrupt();//interrompre le thread si une exception est levee
                 }
             }
         }
     }
-    // shuning yard pour evaluer une longue expression arithmetique 
+    // la methode calculate qui evalue toute une expression mathematique en utilisant l'algorithme de Shunting Yard 
+    // et qui supporte les operations de base +, -, *, /, % et les parenthèses 
+    //les operations de base seront effectuees en binaire apres conversion de la chaine de caracteres recus en binaire
+    // et le resultat sera converti en decimal avant d'etre renvoye au client
     public static double calculate(String expression) {
+        // Remplacer les symboles de division et de multiplication par leurs équivalents en Java
         expression = expression.replace("÷", "/").replace("x", "*").replaceAll(" ", "");
-        Stack<Double> numbers = new Stack<>();
-        Stack<Character> operators = new Stack<>();
+        Stack<Double> numbers = new Stack<>();//pile pour stocker les nombres
+        Stack<Character> operators = new Stack<>();//pile pour stocker les operateurs
         int i = 0;
+        // Parcourir l'expression et traiter les nombres et les opérateurs
         while (i < expression.length()) {
-            char ch = expression.charAt(i);
-            if (ch == ' ') {
+            char ch = expression.charAt(i);//extraire le caractere courant de l'expression
+            if (ch == ' ') {//ignorer les espaces
                 i++;
                 continue;
             }
-            if (Character.isDigit(ch) || ch == '.' || (ch == '-' &&
-                    (i == 0 || !Character.isDigit(expression.charAt(i - 1)) && expression.charAt(i - 1) != ')'))) {
-                StringBuilder sb = new StringBuilder();
-                if (ch == '-') {
+            // Si le caractère est un chiffre ou un point décimal ou un signe moins extraire le nombre
+            if (Character.isDigit(ch) || ch == '.' || (ch == '-' && (i == 0 || !Character.isDigit(expression.charAt(i - 1)) && expression.charAt(i - 1) != ')'))) {
+                StringBuilder sb = new StringBuilder();//creation d'un buffer pour stocker le nombre
+                if (ch == '-') {//si le caractere est un signe moins, on l'ajoute au buffer
                     sb.append('-');
                     i++;
                 }
-                while (i < expression.length() &&
-                        (Character.isDigit(expression.charAt(i)) || expression.charAt(i) == '.')) {
-                    sb.append(expression.charAt(i));
+                // Extraire le nombre entier ou décimal
+                while (i < expression.length() && (Character.isDigit(expression.charAt(i)) || expression.charAt(i) == '.')) {
+                    sb.append(expression.charAt(i));////ajouter le caractere courant au buffer
                     i++;
                 }
-                numbers.push(Double.parseDouble(sb.toString()));
+                numbers.push(Double.parseDouble(sb.toString()));//convertir le buffer en un nombre decimal et l'ajouter a la pile des nombres
+                // Si le nombre est suivi d'un pourcentage, le traiter en le convertissant en decimal par devision par 100
                 if (i < expression.length() && expression.charAt(i) == '%') {
                     double value = numbers.pop() / 100.0;
-                    numbers.push(value);
+                    numbers.push(value);//ajouter le nombre decimal a la pile des nombres
                     i++;
                 }
+                //traiter les operateurs 
             } else if (ch == '+' || ch == '-' || ch == '*' || ch == '/') {
+                //appliquer les operateurs de plus haute precedence avant d'ajouter l'operateur courant (on fera l'appel des methodes precedence et applyOp)
                 while (!operators.isEmpty() && precedence(operators.peek()) >= precedence(ch)) {
                     double b = numbers.pop();
                     double a = numbers.pop();
@@ -225,7 +236,7 @@ public class server {
         String intBinary = (intPart == 0) ? "0" : Long.toBinaryString(intPart);
         // Convert fractional part to binary (limited precision)
         StringBuilder fracBinary = new StringBuilder();
-        for (int i = 0; i < 10 && fracPart > 0; i++) {
+        for (int i = 0; i < 50 && fracPart > 0; i++) {
             fracPart *= 2;
             if (fracPart >= 1) {
                 fracBinary.append("1");
