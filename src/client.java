@@ -34,7 +34,7 @@ public class client {
         contenu.add(txtWrapper, BorderLayout.NORTH);
         pan.setLayout(new GridLayout(5, 4, 5, 5));
         boutons = new JButton[NBOUTONS];
-        String[] b = {"C","±","%","÷","7","8","9","x","4","5","6","-","1","2","3","+","0",".","⌫","="};
+        String[] b = {"C","±","%","÷","7","8","9","x","4","5","6","-","1","2","3","+","0",".","DEL","="};
         for (int i = 0; i < NBOUTONS; i++) {
             boutons[i] = new JButton(b[i]);
             boutons[i].setFont(new Font("Arial", Font.BOLD, 16));
@@ -144,7 +144,7 @@ public class client {
                             txt.setText("-" + currentText);
                         }
                     }
-                } else if ("⌫".equals(text)) {
+                } else if ("DEL".equals(text)) {
                     String currentText = txt.getText();
                     if (currentText.length() > 0) {
                         txt.setText(currentText.substring(0, currentText.length() - 1));
