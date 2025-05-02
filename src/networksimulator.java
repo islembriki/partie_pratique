@@ -57,7 +57,8 @@ public class networksimulator {
         return new String(chars);
     } */
 
-    
+    //hedi aamltha khtr tfkrt ki s2ltou mara mr moch fama chance tsir l errreur fi bits de controle bidhom kali
+    //hia deja le fait inha tsir fi donne chway khali bech tsir fi controle , watha chnace mteea tress tres petite
    //hedi taamlch ghlta , ken fi donne taaml:
    private static String introduceError(String data) {
     // Split the message and checksum based on the '|' separator

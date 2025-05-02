@@ -168,14 +168,67 @@ public class client {
     DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);
     socket.send(packet); 
 }
-    private static int calculateChecksum(String message) {
+   /* private static int calculateChecksum(String message) {
         // Simple checksum: sum of character values
         int sum = 0;
         for (char c : message.toCharArray()) {
             sum += c;
         }
         return sum;
+    }*/
+
+
+
+
+
+    //methode maakda taa checksum 
+    private static int calculateChecksum(String message) {
+        // Define the word size in bits
+        final int WORD_SIZE = 16; // 16-bit words
+        final int CHECKSUM_SIZE = 16; // Final checksum will be 16 bits
+        
+        // Convert message to bit representation
+        StringBuilder bitRepresentation = new StringBuilder();
+        for (char c : message.toCharArray()) {
+            // Convert each character to 16-bit binary representation
+            String binaryChar = Integer.toBinaryString(c);
+            // Pad to ensure 16 bits per character
+            while (binaryChar.length() < 16) {
+                binaryChar = "0" + binaryChar;
+            }
+            bitRepresentation.append(binaryChar);
+        }
+        
+        // Ensure the bit representation length is a multiple of WORD_SIZE
+        // by padding with zeros if necessary
+        while (bitRepresentation.length() % WORD_SIZE != 0) {
+            bitRepresentation.append("0");
+        }
+        
+        // Divide the bits into words and sum them
+        int sum = 0;
+        for (int i = 0; i < bitRepresentation.length(); i += WORD_SIZE) {
+            // Extract a word of WORD_SIZE bits
+            String word = bitRepresentation.substring(i, Math.min(i + WORD_SIZE, bitRepresentation.length()));
+            // Convert the binary word to an integer and add to sum
+            int wordValue = Integer.parseInt(word, 2);
+            sum += wordValue;
+        }
+        
+        // Take only the least significant CHECKSUM_SIZE bits
+        // This is done by using a bitmask: (1 << CHECKSUM_SIZE) - 1
+        int checksum = sum & ((1 << CHECKSUM_SIZE) - 1);
+        
+        return checksum;
     }
+
+
+
+
+
+
+
+
     private static String receiveFromServer() throws IOException {
         // Set timeout to 2 seconds (more reasonable than 1 second)
         socket.setSoTimeout(2000);
