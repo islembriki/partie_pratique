@@ -432,26 +432,29 @@ public class server {
         if (a.equals("0.0") || b.equals("0.0"))
             return "0.0";
         //diviser les deux nombres en parties entieres et fractionnaires
-        String[] partsA = a.split("\\.");
-        String[] partsB = b.split("\\.");
-        String intA = partsA[0];
+        String[] partsA = a.split("\\.");//diviser la chaine binaire a en deux parties: la partie entiere et la partie fractionnaire
+        String[] partsB = b.split("\\.");//diviser la chaine binaire b en deux parties: la partie entiere et la partie fractionnaire
+        String intA = partsA[0];//extraire la partie entiere de a
+        //extraire la partie fractionnaire de a and on doit ajouter des zeros a la fin pour que les deux parties fractionnaires aient la meme longueur
         String fracA = partsA.length > 1 ? partsA[1] : "0";
-        String intB = partsB[0];
+        String intB = partsB[0];//extraire la partie entiere de b
+        // extraire la partie fractionelle de b On va ajouter des zeros a la fin de la partie fractionnaire pour que les deux parties fractionnaires aient la meme longueur
         String fracB = partsB.length > 1 ? partsB[1] : "0";
-        // Calculate number of decimal positions to shift
+        // Calculer le nombre de chiffres après la virgule dans le résultat
+        // On va additionner la longueur des parties fractionnaires de a et b pour obtenir le nombre de chiffres apres la virgule dans le resultat
         int decimalShift = fracA.length() + fracB.length();
-        // Create operands without decimal point for integer multiplication
+        // Creer les operandes en concatenant les parties entieres et fractionnaires
         String operandA = intA + fracA;
         String operandB = intB + fracB;
-        // Remove leading zeros
+        // On va enlever les zeros de tete de la partie entiere et les zeros de queue de la partie fractionnaire
         operandA = operandA.replaceFirst("^0+", "");
         operandB = operandB.replaceFirst("^0+", "");
-        // Handle empty strings
+        //traiter le cas ou les deux operandes sont vides
         if (operandA.isEmpty())
             operandA = "0";
         if (operandB.isEmpty())
             operandB = "0";
-        // Perform binary multiplication (long multiplication algorithm)
+        //faire une multiplication binaire en utilisant l'algorithme de longue multiplication
         String result = "0";
         for (int i = operandB.length() - 1; i >= 0; i--) {
             if (operandB.charAt(i) == '1') {
