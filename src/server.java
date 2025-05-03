@@ -46,8 +46,8 @@ public class server {
                 // Proceder à l'évaluation de l'expression mathématique
                 try {
                     double result = calculate(message);//calculer le resultat de l'expression mathematique avec l'appel de la methode calculate qui evalue toute une expression mathematique 
-                    DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
-                    DecimalFormat df = new DecimalFormat("0.######", symbols);
+                    DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);//
+                    DecimalFormat df = new DecimalFormat("0.######", symbols);//un formatteur pour formater le resultat en decimal avec 6 chiffres apres la virgule
                     String resultStr = String.valueOf(df.format(result));//convertir le resultat en une chaine de caracteres
                     sendToClient(resultStr, packet.getAddress(), packet.getPort());//envoyer le resultat au client avec l'appel de la methode sendToClient qui envoie le message au client
                 } catch (Exception e) {
@@ -118,7 +118,7 @@ public class server {
             }
         }
     }
-    // la methode calculate qui evalue toute une expression mathematique en utilisant l'algorithme de Shunting Yard 
+    // la methode calculate qui evalue toute une expression mathematique(pas seulement deux operandes) en utilisant l'algorithme de Shunting Yard 
     // et qui supporte les operations de base +, -, *, /, % et les parenthèses 
     //les operations de base seront effectuees en binaire apres conversion de la chaine de caracteres recus en binaire
     // et le resultat sera converti en decimal avant d'etre renvoye au client
@@ -197,6 +197,7 @@ public class server {
         String binaryA = doubleToBinaryString(a);//
         String binaryB = doubleToBinaryString(b);
         String resultBinary;
+        //traiter le cas ou les deux nombres sont inferieurs a 10 et ont une partie fractionnaire car il peut y avoir quelques cas de tests ou la conversion binire des chiffres decimales tres petits n'est pas toujours a 100% precise
         if (a < 10 && b < 10 && hasFraction(a) && hasFraction(b)) {
             if (op == '+') {
                 return a + b;
@@ -213,6 +214,7 @@ public class server {
                 resultBinary = binarySubtract(binaryA, binaryB);
                 break;
             case '*':
+            //traiter le cas ou les deux nombres sont inferieurs a 10 et ont une partie fractionnaire car il peut y avoir quelques cas de tests ou la conversion binire de quelques nombres avec une partie fractionelle n'est pas toujours a 100% precise
                 if (hasFraction(a) && hasFraction(b)){
                     return a * b;
                 }
@@ -443,7 +445,7 @@ public class server {
         // Calculer le nombre de chiffres après la virgule dans le résultat
         // On va additionner la longueur des parties fractionnaires de a et b pour obtenir le nombre de chiffres apres la virgule dans le resultat
         int decimalShift = fracA.length() + fracB.length();
-        // Creer les operandes en concatenant les parties entieres et fractionnaires
+        // Creer les operandes en concatenant les parties entieres et fractionnaires(comme on fait dans un multiplication decimale ou on va ajouter le point decimal apres la multplication , c'est le meme principe )
         String operandA = intA + fracA;
         String operandB = intB + fracB;
         // On va enlever les zeros de tete de la partie entiere et les zeros de queue de la partie fractionnaire
@@ -455,23 +457,25 @@ public class server {
         if (operandB.isEmpty())
             operandB = "0";
         //faire une multiplication binaire en utilisant l'algorithme de longue multiplication
-        String result = "0";
+        String result = "0";//creation d'un buffer pour stocker le resultat de la multiplication binaire
+        // On va parcourir les bits de l'operande b de droite a gauche
         for (int i = operandB.length() - 1; i >= 0; i--) {
-            if (operandB.charAt(i) == '1') {
-                // Shift operandA according to position and add
+            if (operandB.charAt(i) == '1') {//si le bit de l'operande b est 1, on doit multiplier l'operande a par 1 et ajouter le resultat au resultat final
+                // On va ajouter des zeros a la fin de l'operande a pour le decaler a gauche
+                // On va faire un deplacement de bits a gauche pour decaler l'operande a de i bits
                 String shifted = operandA + "0".repeat(operandB.length() - 1 - i);
                 result = binaryAdd(result, shifted);
             }
         }
-        // Insert the decimal point
-        int resultLength = result.length();
-        if (decimalShift >= resultLength) {
+        // Inserer le point decimal dans le resultat
+        int resultLength = result.length();//longueur du resultat
+        if (decimalShift >= resultLength) {//si le nombre de chiffres apres la virgule est superieur a la longueur du resultat, on doit ajouter des zeros a la fin du resultat
             result = "0." + "0".repeat(decimalShift - resultLength) + result;
-        } else {
+        } else {//si le nombre de chiffres apres la virgule est inferieur a la longueur du resultat, on doit ajouter le point decimal au resultat
             result = result.substring(0, resultLength - decimalShift) + "." +
                     result.substring(resultLength - decimalShift);
         }
-        // Remove leading zeros in integer part and trailing zeros in fractional part
+        //enlever les zeros de tete de la partie entiere et les zeros de queue de la partie fractionnaire
         String finalResult = result.replaceFirst("^0+(?!\\.|$)", "");
         if (finalResult.startsWith("."))
             finalResult = "0" + finalResult;
@@ -482,80 +486,83 @@ public class server {
         }
         return isNegative ? "-" + finalResult : finalResult;
     }
-    // Binary division - proper implementation
+    //division binaire 
     private static String binaryDivide(String a, String b) {
-        // Check for division by zero
+        // traiter le cas de la division par zero
         if (b.equals("0.0") || b.equals("0") || b.equals("-0.0")) {
             throw new ArithmeticException("Division par zéro");
         }
-
-        // Handle division of zero
+        // traiter le cas de la division de zero
         if (a.equals("0.0") || a.equals("0") || a.equals("-0.0")) {
             return "0.0";
         }
-        boolean isNegative = a.startsWith("-") ^ b.startsWith("-");
-        // Remove negative signs for calculation
+        boolean isNegative = a.startsWith("-") ^ b.startsWith("-");//verifier si le resultat doit etre negatif
+        //enlever les signes negatifs pour le calcul
         if (a.startsWith("-"))
             a = a.substring(1);
         if (b.startsWith("-"))
             b = b.substring(1);
-        // Split into integer and fractional parts
+        // diviser les deux nombres en parties entieres et fractionnaires
+        // On va ajouter des zeros a la fin de la partie fractionnaire pour que les deux parties fractionnaires aient la meme longueur
         String[] partsA = a.split("\\.");
         String[] partsB = b.split("\\.");
         String intA = partsA[0];
         String fracA = partsA.length > 1 ? partsA[1] : "0";
         String intB = partsB[0];
         String fracB = partsB.length > 1 ? partsB[1] : "0";
-        // Normalize numbers by shifting decimal points to create integers
+        // Creer les operandes en concatenant les parties entieres et fractionnaires(comme on fait dans une division decimale ou on va ajouter le point decimal apres la multplication , c'est le meme principe )
         String operandA = intA + fracA;
         String operandB = intB + fracB;
-        // Remove leading and trailing zeros
+        //normaliser les operandes en ajoutant des zeros a la fin de la partie fractionnaire pour que les deux parties fractionnaires aient la meme longueur
         operandA = operandA.replaceFirst("^0+", "");
         operandB = operandB.replaceFirst("^0+", "");
-        // Handle empty strings
+        //traiter le cas ou les deux operandes sont vides
         if (operandA.isEmpty())
             operandA = "0";
         if (operandB.isEmpty())
             operandB = "0";
-        // Shift decimal places to account for fractions
-        int decimalAdjustment = fracB.length() - fracA.length();
-        // Ensure dividend has enough precision
-        int precision = 20; // Controls precision of division result
-        operandA = operandA + "0".repeat(precision + Math.max(0, decimalAdjustment));
-        // Long division algorithm
-        StringBuilder quotient = new StringBuilder();
-        StringBuilder remainder = new StringBuilder();
-        // Process each digit of operandA
+        //Déplacer la virgule décimale pour tenir compte des fractions
+        int decimalAdjustment = fracB.length() - fracA.length();//Calcule la différence de longueur entre les parties fractionnaires pour ajuster la position décimale
+        // s'assurer de la precision de la division
+        int precision = 20;// Définit la précision de la division à 20 chiffres après la virgule
+        operandA = operandA + "0".repeat(precision + Math.max(0, decimalAdjustment));//// Ajoute des zéros à l'opérande A pour assurer une précision suffisante lors de la division
+        //diviser les operandes en utilisant l'algorithme de la division longue
+        StringBuilder quotient = new StringBuilder();// Crée un StringBuilder pour stocker le quotient de la division
+        StringBuilder remainder = new StringBuilder();// Crée un StringBuilder pour stocker le reste temporaire pendant le processus de division
+        // On va parcourir les bits de l'operande A de gauche a droite
         for (int i = 0; i < operandA.length(); i++) {
-            remainder.append(operandA.charAt(i));
-            // Remove leading zeros for valid comparison
+            remainder.append(operandA.charAt(i));// Ajoute chaque chiffre de l'opérande A au reste courant, un par un
+            // enlever les zeros de tete du reste pour une comparaison correcte et car ils sont inutiles
             String remainderStr = remainder.toString().replaceFirst("^0+", "");
             if (remainderStr.isEmpty())
-                remainderStr = "0";
-            // Check if we can subtract operandB from current remainder
+                remainderStr = "0";// Si tous les chiffres étaient des zéros, on définit le reste à "0"
+            //verifier si on peut soustraire l'operande B du reste courant
+            // On compare la valeur absolue du reste courant avec l'opérande B
             if (binaryCompareAbs(remainderStr, operandB) >= 0) {
                 quotient.append("1");
+                // Si oui, on peut soustraire B, donc on ajoute un "1" au quotient
                 remainder = new StringBuilder(binarySubtractAbs(remainderStr, operandB));
             } else {
+                // Sinon, on ne peut pas soustraire B, donc on ajoute un "0" au quotient
                 quotient.append("0");
             }
         }
-        // Adjust quotient to account for decimal point
-        String quotientStr = quotient.toString().replaceFirst("^0+", "");
+        // Ajuster le quotient pour prendre compte de la position décimale
+        String quotientStr = quotient.toString().replaceFirst("^0+", "");// Convertit le quotient en chaîne et supprime les zéros non significatifs au début
         if (quotientStr.isEmpty())
-            quotientStr = "0";
-        // Calculate position for decimal point
-        int decimalPos = quotientStr.length() - precision - decimalAdjustment;
-        // Insert decimal point
+            quotientStr = "0";// Si le quotient était constitué uniquement de zéros, on le définit à "0"
+        // Calculer la position de point decimal
+        int decimalPos = quotientStr.length() - precision - decimalAdjustment;//on le calcule comme ca car on a deplace la virgule de l'operande A pour tenir compte des fractions
+        // Inserer le point decimal 
         String result;
         if (decimalPos <= 0) {
-            result = "0." + "0".repeat(-decimalPos) + quotientStr;
-        } else if (decimalPos >= quotientStr.length()) {
+            result = "0." + "0".repeat(-decimalPos) + quotientStr;// Si la position décimale est négative ou nulle, on ajoute "0." suivi de zéros puis du quotient
+        } else if (decimalPos >= quotientStr.length()) {/// Si la position décimale dépasse la longueur du quotient, on ajoute des zéros puis ".0"
             result = quotientStr + "0".repeat(decimalPos - quotientStr.length()) + ".0";
-        } else {
+        } else {//Sinon, on insère tout simplement la virgule décimale à la position calculée
             result = quotientStr.substring(0, decimalPos) + "." + quotientStr.substring(decimalPos);
         }
-        // Remove trailing zeros in fractional part
+        //enlever les zeros de tete de la partie entiere et les zeros de queue de la partie fractionnaire
         if (result.contains(".")) {
             result = result.replaceFirst("0+$", "");
             if (result.endsWith("."))
@@ -563,112 +570,102 @@ public class server {
         }
         return isNegative ? "-" + result : result;
     }
-    // Helper method for binary division - absolute value comparison
+    //methode pour comparer deux chaines binaires en valeur absolue qui nous aide dans les methodes de calcul binaire(division) 
     private static int binaryCompareAbs(String a, String b) {
-        // Remove any negative signs for comparison
+        //enlever les signes negatifs pour la comparaison
         if (a.startsWith("-"))
             a = a.substring(1);
         if (b.startsWith("-"))
             b = b.substring(1);
-
-        // Compare lengths first
+        //comparer les longueurs des deux chaines binaires d'abord 
         if (a.length() != b.length()) {
-            return a.length() > b.length() ? 1 : -1;
+            return a.length() > b.length() ? 1 : -1; // Si les longueurs sont différentes, la chaîne la plus longue est considérée comme plus grande
         }
-
-        // Compare digits
+        // Comparer maintenant les bits de gauche à droite
+        // On va comparer les bits de gauche a droite pour savoir lequel des deux nombres est le plus grand
         for (int i = 0; i < a.length(); i++) {
             if (a.charAt(i) != b.charAt(i)) {
-                return a.charAt(i) > b.charAt(i) ? 1 : -1;
+                return a.charAt(i) > b.charAt(i) ? 1 : -1; // Compare chaque chiffre un par un, et retourne dès qu'une différence est trouvée
             }
         }
-
-        // Equal
-        return 0;
+        return 0;//Si toutes les comparaisons précédentes sont égales, les nombres sont identiques
     }
-
-    // Helper method for binary division - absolute value subtraction
+    //methode pour soustraire deux chaines binaires en valeur absolue qui nous aide dans les methodes de calcul binaire(division)
     private static String binarySubtractAbs(String a, String b) {
-        // Remove any negative signs
+        //enlever les signes negatifs pour le calcul
         if (a.startsWith("-"))
             a = a.substring(1);
         if (b.startsWith("-"))
             b = b.substring(1);
-
-        // Ensure a >= b
-        if (binaryCompareAbs(a, b) < 0) {
+        //s'assurer que a est plus grand que b pour la soustraction
+        if (binaryCompareAbs(a, b) < 0) {//perumtation de a et b si a est plus petit que b pour assurer une soustraction positive
             String temp = a;
             a = b;
             b = temp;
         }
-
-        // Pad b with leading zeros to match length of a
-        b = "0".repeat(a.length() - b.length()) + b;
-
-        StringBuilder result = new StringBuilder();
-        int borrow = 0;
-
-        // Subtract from right to left
+        b = "0".repeat(a.length() - b.length()) + b;// Ajoute des zéros au début de b pour qu'il ait la même longueur que a
+        StringBuilder result = new StringBuilder();//creation d'un buffer pour stocker le resultat de la soustraction binaire
+        int borrow = 0;//variable pour stocker la retenue de la soustraction binaire
+        // On va parcourir les bits de droite a gauche pour faire la soustraction binaire
         for (int i = a.length() - 1; i >= 0; i--) {
-            int digitA = a.charAt(i) - '0';
-            int digitB = b.charAt(i) - '0';
-
-            digitA -= borrow;
-            if (digitA < digitB) {
+            int digitA = a.charAt(i) - '0';//Convertit le caractère en chiffre numérique pour a
+            int digitB = b.charAt(i) - '0';// Convertit le caractère en chiffre numérique pour b
+            digitA -= borrow;// Soustrait la retenue précédente de digitA
+            if (digitA < digitB) {// Si digitA est plus petit que digitB, on emprunte 2 (car base binaire) et on définit la retenue à 1
                 digitA += 2;
                 borrow = 1;
             } else {
-                borrow = 0;
+                borrow = 0;//sinon pas la peine d'une retenue
             }
-
-            result.append(digitA - digitB);
+            result.append(digitA - digitB);//Ajoute le résultat de la soustraction des chiffres au résultat final
         }
-
-        // Reverse the result
+        // Inverse le résultat (car construit de droite à gauche) et supprime les zéros non significatifs
         return result.reverse().toString().replaceFirst("^0+", "");
     }
-    // Compare two binary strings (ignoring decimal points)
+    // methode pour comparer deux chaines binaires qui nous aide dans les methodes de calcul binaire
     private static int compareBinary(String a, String b) {
-        // Remove any negative signs for comparison
-        boolean aIsNegative = a.startsWith("-");
-        boolean bIsNegative = b.startsWith("-");
+        //enlever les signes negatifs pour la comparaison
+        boolean aIsNegative = a.startsWith("-");//determiner si le nombre est negatif
+        boolean bIsNegative = b.startsWith("-");///determiner si le nombre est negatif
         if (aIsNegative && !bIsNegative)
-            return -1;
+            return -1;// Si a est négatif et b ne l'est pas, a est plus petit
         if (!aIsNegative && bIsNegative)
-            return 1;
-        // Both have same sign, remove negative signs if present
+            return 1;// Si a est positif et b est négatif, a est plus grand
+        //tous les deux nombres sont positifs ou tous les deux sont negatifs
+        //enlever alors  les signes negatifs pour la comparaison
         if (aIsNegative)
             a = a.substring(1);
         if (bIsNegative)
             b = b.substring(1);
-        // Split into integer and fractional parts
+        //diviser les deux nombres en parties entieres et fractionnaires
         String[] partsA = a.split("\\.");
         String[] partsB = b.split("\\.");
-        // Compare integer parts
-        String intA = partsA[0].replaceFirst("^0+", "");
+        // Comparer les parties entières
+        String intA = partsA[0].replaceFirst("^0+", "");// Récupère la partie entière de a et supprime les zéros non significatifs
         if (intA.isEmpty())
-            intA = "0";
-        String intB = partsB[0].replaceFirst("^0+", "");
+            intA = "0";// Si la partie entière était constituée uniquement de zéros, on la définit à "0"
+        String intB = partsB[0].replaceFirst("^0+", "");//// Récupère la partie entière de b et supprime les zéros non significatifs
         if (intB.isEmpty())
-            intB = "0";
+            intB = "0";// Si la partie entière était constituée uniquement de zéros, on la définit à "0"
         if (intA.length() != intB.length())
-            return (intA.length() > intB.length()) ? 1 : -1;
+            return (intA.length() > intB.length()) ? 1 : -1;//// Si les longueurs des parties entières sont différentes, le nombre avec la partie entière la plus longue est plus grand
         for (int i = 0; i < intA.length(); i++) {
             if (intA.charAt(i) != intB.charAt(i))
                 return (intA.charAt(i) > intB.charAt(i)) ? 1 : -1;
+                // Compare chaque chiffre des parties entières et retourne dès qu'une différence est trouvée
         }
-        // Integer parts are equal, compare fractional parts
-        String fracA = (partsA.length > 1) ? partsA[1] : "";
-        String fracB = (partsB.length > 1) ? partsB[1] : "";
-        // Pad with zeros to make comparison easier
-        int maxLen = Math.max(fracA.length(), fracB.length());
+        //si les parties entières sont égales, on doit alors passer a comparer les parties fractionnaires
+        String fracA = (partsA.length > 1) ? partsA[1] : "";// Récupère la partie fractionnaire de a, ou une chaîne vide s'il n'y en a pas
+        String fracB = (partsB.length > 1) ? partsB[1] : "";// Récupère la partie fractionnaire de b, ou une chaîne vide s'il n'y en a pas
+        // On va ajouter des zéros à la fin de la partie fractionnaire pour que les deux parties fractionnaires aient la même longueur et la comparaison sera plus facile
+        int maxLen = Math.max(fracA.length(), fracB.length());//maximum de la longueur des parties fractionnaires
         fracA = fracA + "0".repeat(maxLen - fracA.length());
         fracB = fracB + "0".repeat(maxLen - fracB.length());
         for (int i = 0; i < maxLen; i++) {
             if (fracA.charAt(i) != fracB.charAt(i))
                 return (fracA.charAt(i) > fracB.charAt(i)) ? 1 : -1;
+                //compare chaque chiffre des parties fractionnaires et retourne dès qu'une différence est trouvée
         }
-        // They are exactly equal
-        return 0;
+        return 0;// Si toutes les comparaisons précédentes sont égales, les nombres sont identiques
     }
 }
