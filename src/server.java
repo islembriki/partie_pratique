@@ -1,4 +1,4 @@
-//importer les bibliotheques necessaires pour l'implementation des datagrams sockets(UDP)
+//importer les bibliotheques necessaires pour les operations d'entree/sortie, le reseau et les structures de donnees
 import java.io.*;
 import java.net.*;
 import java.text.DecimalFormat;

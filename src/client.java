@@ -7,7 +7,6 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 public class client {
-   
     private static DatagramSocket socket;// UDP socket pour la communication
     private static InetAddress serverAddress;// adresse ip du serveur pour l'envoie des packets'
     private static int server_port = 5678; // Port pour le simulateur de réseau
@@ -75,7 +74,6 @@ public class client {
             public void actionPerformed(ActionEvent e) {//méthode appelée lors d'un clic sur un bouton
                 JButton source = (JButton) e.getSource();//obtenir le bouton cliqué
                 String text = source.getText();//obtenir le texte du bouton
-                
                 if ("+x÷%-".contains(text)) {//si le texte du bouton est un opérateur
                     if (txt.getText().length() > 0) {//si le champ de texte n'est pas vide
                         txt.setText(txt.getText() + text);//ajouter l'opérateur au champ de texte
@@ -85,9 +83,7 @@ public class client {
                     txt.setForeground(Color.BLACK); // remettre la couleur du texte en noir
                 } else if ("=".equals(text)) {//si le bouton cliqué est "="
                     String expression = txt.getText();//obtenir l'expression du champ de texte
-                    
                     txt.setEnabled(false);// désactiver le champ de texte pendant le traitement
-                   
                     SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {//classe SwingWorker utitaire pour exécuter le traitement en arrière-plan
                         @Override
                         protected String doInBackground() throws Exception {//méthode exécutée en arrière-plan
@@ -127,7 +123,6 @@ public class client {
                             Math.max(currentText.lastIndexOf('+'), currentText.lastIndexOf('-')),
                             Math.max(currentText.lastIndexOf('x'), currentText.lastIndexOf('÷'))
                         );//trouver le dernier opérateur dans le texte
-                        
                         String currentNumber = currentText.substring(lastOperatorIndex + 1);//obtenir le nombre actuel après le dernier opérateur
                         if (!currentNumber.contains(".")) {//si le nombre actuel ne contient pas de "."
                             txt.setText(currentText + text);//ajouter "." au texte actuel
@@ -157,22 +152,16 @@ public class client {
         }
     }
    private static void sendToServer(String message, InetAddress address, int port) throws IOException {//méthode pour envoyer un message au serveur
-   
     int checksum = calculateChecksum(message);// Calculer le checksum du message
-    
     String messageWithChecksum = message + "|" + checksum;// Ajouter le checksum au message
     String sending=messageWithChecksum.trim();//trim pour enlever les espaces au debut et fin du message
     byte[] buf = sending.getBytes();// Convertir le message en tableau d'octets
     DatagramPacket packet = new DatagramPacket(buf, buf.length, address, port);// Créer un paquet UDP avec le message, l'adresse et le port du serveur
     socket.send(packet); // Envoyer le paquet au serveur
 } 
-
     private static int calculateChecksum(String message) {//méthode pour calculer le checksum du message
-        
         final int WORD_SIZE = 16; //taille de mot de code 
         final int CHECKSUM_SIZE = 16; //taille de checksum de code
-        
-      
         StringBuilder bitRepresentation = new StringBuilder();
         for (char c : message.toCharArray()) {// Convertir chaque caractère en représentation binaire
            
@@ -183,33 +172,23 @@ public class client {
             }
             bitRepresentation.append(binaryChar);// Ajouter la représentation binaire du caractère à la chaîne
         }
-       
         while (bitRepresentation.length() % WORD_SIZE != 0) {
             bitRepresentation.append("0");// Compléter avec des zéros à droite pour atteindre un multiple de WORD_SIZE
         }
-        
         int sum = 0;// Somme des mots de 16 bits
         for (int i = 0; i < bitRepresentation.length(); i += WORD_SIZE) {
-            
             String word = bitRepresentation.substring(i, Math.min(i + WORD_SIZE, bitRepresentation.length()));// Extraire un mot de 16 bits
-            
             int wordValue = Integer.parseInt(word, 2);// Convertir le mot binaire en entier
             sum += wordValue;// Ajouter la valeur du mot à la somme
         }
-       
-        
         int checksum = sum & ((1 << CHECKSUM_SIZE) - 1);// Garder seulement CHECKSUM_SIZE bits de la somme
-        
         checksum = ~checksum & ((1 << CHECKSUM_SIZE) - 1); // Complément à un pour obtenir le checksum
         return checksum;// Retourner le checksum
     }
     private static String receiveFromServer() throws IOException {//méthode pour recevoir un message du serveur
-    
         socket.setSoTimeout(2000);  // Définir un délai d'attente de 2 secondes pour la réception
-        
         byte[] buffer = new byte[4096];// Taille du tampon pour recevoir le message
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);// Créer un paquet pour recevoir le message
-        
         try {
             socket.receive(packet);// Recevoir le paquet du serveur
             String result = new String(packet.getData(), 0, packet.getLength());// Convertir le message reçu en chaîne de caractères
@@ -217,8 +196,6 @@ public class client {
             return result;// Retourner le message reçu
         } catch (SocketTimeoutException e) {
             System.out.println("Socket timeout occurred");// Afficher un message d'erreur si le délai d'attente est dépassé
-            
-           
             try {
                 System.out.println("Attempting second receive...");// Afficher un message pour indiquer la deuxième tentative de réception
                 socket.receive(packet);// Recevoir le paquet du serveur à nouveau
@@ -227,11 +204,9 @@ public class client {
                 return result;// Retourner le message reçu
             } catch (Exception ex) {
                 System.out.println("Second receive attempt failed: " + ex.getMessage());// Afficher un message d'erreur si la deuxième tentative échoue
-                
                 return "Erreur: Serveur ne répond pas";// Retourner un message d'erreur si le serveur ne répond pas
             }
-        } finally {
-            
+        } finally {   
             socket.setSoTimeout(0);// Réinitialiser le délai d'attente à 0 pour désactiver le délai d'attente
         }
     }
