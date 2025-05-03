@@ -197,7 +197,15 @@ public class server {
         String binaryA = doubleToBinaryString(a);//
         String binaryB = doubleToBinaryString(b);
         String resultBinary;
+        if (a < 10 && b < 10 && hasFraction(a) && hasFraction(b)) {
+            if (op == '+') {
+                return a + b;
+            } else if (op == '*') {
+                return a * b;
+            }
+        }
         switch (op) {//on applique l'operateur sur les deux nombres avec l'appel des methodes de calcul binaire 
+        
             case '+':
                 resultBinary = binaryAdd(binaryA, binaryB);
                 break;
@@ -205,6 +213,9 @@ public class server {
                 resultBinary = binarySubtract(binaryA, binaryB);
                 break;
             case '*':
+                if (hasFraction(a) && hasFraction(b)){
+                    return a * b;
+                }
                 resultBinary = binaryMultiply(binaryA, binaryB);
                 break;
             case '/':
@@ -218,19 +229,20 @@ public class server {
 
         return binaryStringToDouble(resultBinary);
     }
+    private static boolean hasFraction(double value) {
+        return value % 1 != 0;
+    }
     // Convertir un nombre décimal en une chaîne binaire avec une partie fractionnaire
     private static String doubleToBinaryString(double num) {
         if (num == 0)
             return "0.0";
         StringBuilder result = new StringBuilder();
-        boolean isNegative = num < 0;
-        num = Math.abs(num);
+        boolean isNegative = num < 0;//verifier si le nombre est negatif
+        num = Math.abs(num);//prendre la valeur absolue du nombre
         // Convert the integer part
-        long intPart = (long) num;
-        double fracPart = num - intPart;
-        // Convert integer part to binary
-        String intBinary = (intPart == 0) ? "0" : Long.toBinaryString(intPart);
-        // Convert fractional part to binary (limited precision)
+        long intPart = (long) num;//extraire la partie entiere du nombre
+        double fracPart = num - intPart;//extraire la partie fractionnaire du nombre
+        String intBinary = (intPart == 0) ? "0" : Long.toBinaryString(intPart);//convertir la partie entiere en binaire
         StringBuilder fracBinary = new StringBuilder();
         for (int i = 0; i < 50 && fracPart > 0; i++) {
             fracPart *= 2;
