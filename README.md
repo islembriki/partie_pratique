@@ -1,18 +1,79 @@
-## Getting Started
+# 🧮 Calculatrice Binaire avec UDP et Detection d'erreurs avec Checksum
 
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
+## 👥 Réalisé par
 
-## Folder Structure
+- Islem Briki  
+- Amira El Manaa  
+- Aziza Garbâa  
 
-The workspace contains two folders by default, where:
+Groupe : RT2/1
+Année universitaire : 2024/2025
 
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
+-------------------------------------------------------------------------------------------------------------------
 
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
+## 🎯 Objectif
 
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
+- Appliquer nos connaissances sur les sockets UDP en Java.
+- Implémenter une calculatrice binaire.
+- Exploiter l'Algorithme de SHUNTING YARD  pour evaluer toute une expression mathematique
+- Ajouter une vérification d'intégrité des données à l'aide de la méthode **Checksum**.
+- Simuler des erreurs de transmission via un module intermédiaire (simulateur réseau).
 
-## Dependency Management
+------------------------------------------------------------------------------------------------------------------
 
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
+## 🧩 Architecture du projet
+
+Le système est composé de **trois modules** :
+
+1. **Client (Émetteur)**  
+   - Contient l'interface graphique du calculatrice.
+   - Accepte les données de l'utilisateur.
+   - Calcule le checksum.
+   - Envoie les données au simulateur réseau.
+
+2. **Simulateur Réseau (Module intermédiaire)**  
+   - Introduit aléatoirement des erreurs (10% de probabilité).
+   - Transmet les données modifiées au serveur.
+
+3. **Serveur (Récepteur)**  
+   - Vérifie le checksum.
+   - Évalue l'expression mathématique (avec l'algorithme **Shunting Yard**).
+   - Retourne le résultat ou une erreur au client.
+
+----------------------------------------------------------------------------------------------------------------------
+
+## ⚙️ Fonctionnement
+
+- Communication via **sockets UDP**.
+- Représentation binaire des nombres décimaux.
+- Calcul des opérations binaires : addition, soustraction, multiplication, division.
+- Gestion des erreurs de transmission par recalcul et comparaison du checksum.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 🖥️ Interface Graphique
+
+- Utilisation de **Swing** en Java.
+- Utilisation de **SwingWorker** pour maintenir la réactivité de l’interface.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 📦 Installation et Exécution
+
+1. **Compilation**
+   ```bash
+   javac serveur.java
+   javac client.java
+   javac networksimulator.java
+   
+2. **Execution**  ( ⚠️ Dans cet ordre )
+   ```bash
+   java serveur
+   java networksimulator
+   java client
+
+  
+  
+   
+   
+   
